@@ -1,0 +1,21 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlServerDeploy", "..\Samples\SqlServerDeploy\SqlServerDeploy.csproj", "{2D14771A-B6D4-495A-87E7-D351E7FAC960}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{07A22635-9349-4259-9A92-4AE4083AD45A}"
+	ProjectSection(SolutionItems) = preProject
+		..\.gitignore = ..\.gitignore
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2D14771A-B6D4-495A-87E7-D351E7FAC960}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D14771A-B6D4-495A-87E7-D351E7FAC960}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D14771A-B6D4-495A-87E7-D351E7FAC960}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D14771A-B6D4-495A-87E7-D351E7FAC960}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
