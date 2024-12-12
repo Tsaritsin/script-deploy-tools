@@ -1,5 +1,4 @@
-﻿using Encore.Databases.SqlServer.Shell.Services.ConnectionString;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using SqlServerDeploy.Constants.Infrastructure;
 
@@ -24,16 +23,6 @@ internal static class ConnectionStringHelper
         if (Settings is null) throw new ApplicationException("Connection string settings is missing or invalid.");
 
         return Settings;
-    }
-
-    public static string GetConnectionString(this IConfiguration configuration,
-                                             string databaseName)
-    {
-        var settings = GetSettings(configuration);
-
-        settings.InitialCatalog = databaseName;
-
-        return GetConnectionStringBySettings(settings);
     }
 
     public static string GetConnectionString(this IConfiguration configuration)

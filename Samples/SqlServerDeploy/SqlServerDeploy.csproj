@@ -15,4 +15,14 @@
       <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\Source\ScriptDeployTools.SqlServer\ScriptDeployTools.SqlServer.csproj" />
+      <ProjectReference Include="..\..\Source\ScriptDeployTools\ScriptDeployTools.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Scripts\InitializeDatabase.sql" />
+      <EmbeddedResource Include="Scripts\InitializeDatabase.sql" />
+    </ItemGroup>
+
 </Project>

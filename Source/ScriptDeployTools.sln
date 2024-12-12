@@ -7,6 +7,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		..\.gitignore = ..\.gitignore
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptDeployTools", "ScriptDeployTools\ScriptDeployTools.csproj", "{6A206478-9695-4BE1-BB05-4894DDAF83A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptDeployTools.SqlServer", "ScriptDeployTools.SqlServer\ScriptDeployTools.SqlServer.csproj", "{9355D85F-34E8-4D44-9E3B-C1440C567D6E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,5 +21,13 @@ Global
 		{2D14771A-B6D4-495A-87E7-D351E7FAC960}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D14771A-B6D4-495A-87E7-D351E7FAC960}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D14771A-B6D4-495A-87E7-D351E7FAC960}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A206478-9695-4BE1-BB05-4894DDAF83A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A206478-9695-4BE1-BB05-4894DDAF83A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A206478-9695-4BE1-BB05-4894DDAF83A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A206478-9695-4BE1-BB05-4894DDAF83A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9355D85F-34E8-4D44-9E3B-C1440C567D6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9355D85F-34E8-4D44-9E3B-C1440C567D6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9355D85F-34E8-4D44-9E3B-C1440C567D6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9355D85F-34E8-4D44-9E3B-C1440C567D6E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

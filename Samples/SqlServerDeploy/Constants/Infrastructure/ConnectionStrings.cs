@@ -2,7 +2,7 @@
 {
     public static class ConnectionStrings
     {
-        public const string DefaultConnection = "DefaultConnection";
         public const string DatabaseConnectionSettings = "DatabaseConnectionSettings";
+        public const string DeploySettings = "DeploySettings";
     }
 }

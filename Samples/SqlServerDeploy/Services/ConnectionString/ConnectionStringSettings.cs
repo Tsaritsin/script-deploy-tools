@@ -1,4 +1,4 @@
-﻿namespace Encore.Databases.SqlServer.Shell.Services.ConnectionString;
+﻿namespace SqlServerDeploy.Services.ConnectionString;
 
 internal record ConnectionStringSettings
 {

@@ -1,12 +1,16 @@
-﻿CREATE DATABASE [$DatabaseName$]
+﻿:setvar DataPath @DataPath
+:setvar DatabaseName @DatabaseName
+:setvar DefaultFilePrefix @DefaultFilePrefix
+
+CREATE DATABASE [$DatabaseName$]
     ON PRIMARY (
         NAME = Data,
-        FILENAME = '$DataPath$$DefaultFilePrefix$.mdf',
+        FILENAME = '$(DataPath)$(DefaultFilePrefix).mdf',
         SIZE = 102400 KB,
         FILEGROWTH = 102400 KB)
     LOG ON (
         NAME = Logs,
-        FILENAME = '$DataPath$$DefaultFilePrefix$.ldf',
+        FILENAME = '$(DataPath)$(DefaultFilePrefix).ldf',
         SIZE = 25600 KB,
         FILEGROWTH = 10 %)
     COLLATE SQL_Latin1_General_CP1_CI_AS
