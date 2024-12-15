@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ScriptDeployTools;
-using ScriptDeployTools.SqlServer;
+using ScriptDeployTools.Sources.Embedded;
+using ScriptDeployTools.Targets.SqlServer;
 using Serilog;
 using SqlServerDeploy.Services.ConnectionString;
 using ILogger = Serilog.ILogger;
@@ -28,6 +29,10 @@ internal class DeployHelper(
 
         var deployService = new DeployBuilder()
             .AddLogger(loggerFactory.CreateLogger<IDeploymentService>())
+            .FromEmbeddedResources(options =>
+            {
+                
+            })
             .ToSqlServer(options =>
             {
                 options.ConnectionString = connectionString;

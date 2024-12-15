@@ -1,7 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 
-namespace ScriptDeployTools.SqlServer;
+namespace ScriptDeployTools.Targets.SqlServer;
 
 internal class SqlServerTarget(
     ILogger logger,
@@ -43,9 +43,7 @@ internal class SqlServerTarget(
 
         var script = await scriptSource.GetScript(options.DatabaseCreationScript!);
 
-        var scriptIsFound = !string.IsNullOrWhiteSpace(script);
-
-        if (!scriptIsFound)
+        if (script is null)
             throw new InvalidOperationException($"Database creation script '{options.DatabaseCreationScript}' is not found");
 
         await using var connection = new SqlConnection(connectionString);
@@ -56,7 +54,7 @@ internal class SqlServerTarget(
 
             await using var command = connection.CreateCommand();
 
-            command.CommandText = script!;
+            command.CommandText = script.Content;
 
             command.Parameters.AddWithValue("@DataPath", options.DataPath);
             command.Parameters.AddWithValue("@DefaultFilePrefix", options.DefaultFilePrefix);

@@ -9,7 +9,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptDeployTools", "ScriptDeployTools\ScriptDeployTools.csproj", "{6A206478-9695-4BE1-BB05-4894DDAF83A5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptDeployTools.SqlServer", "ScriptDeployTools.SqlServer\ScriptDeployTools.SqlServer.csproj", "{9355D85F-34E8-4D44-9E3B-C1440C567D6E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptDeployTools.Targets.SqlServer", "ScriptDeployTools.Targets.SqlServer\ScriptDeployTools.Targets.SqlServer.csproj", "{9355D85F-34E8-4D44-9E3B-C1440C567D6E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptDeployTools.Sources.Embedded", "ScriptDeployTools.Sources.Embedded\ScriptDeployTools.Sources.Embedded.csproj", "{C00EE6B2-6CA7-444A-87C6-FF4B85B1911C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,5 +31,9 @@ Global
 		{9355D85F-34E8-4D44-9E3B-C1440C567D6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9355D85F-34E8-4D44-9E3B-C1440C567D6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9355D85F-34E8-4D44-9E3B-C1440C567D6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C00EE6B2-6CA7-444A-87C6-FF4B85B1911C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C00EE6B2-6CA7-444A-87C6-FF4B85B1911C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C00EE6B2-6CA7-444A-87C6-FF4B85B1911C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C00EE6B2-6CA7-444A-87C6-FF4B85B1911C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

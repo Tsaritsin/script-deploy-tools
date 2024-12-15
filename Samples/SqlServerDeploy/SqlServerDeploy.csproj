@@ -16,7 +16,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Source\ScriptDeployTools.SqlServer\ScriptDeployTools.SqlServer.csproj" />
+      <ProjectReference Include="..\..\Source\ScriptDeployTools.Sources.Embedded\ScriptDeployTools.Sources.Embedded.csproj" />
+      <ProjectReference Include="..\..\Source\ScriptDeployTools.Targets.SqlServer\ScriptDeployTools.Targets.SqlServer.csproj" />
       <ProjectReference Include="..\..\Source\ScriptDeployTools\ScriptDeployTools.csproj" />
     </ItemGroup>
 

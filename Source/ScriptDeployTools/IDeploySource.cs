@@ -2,5 +2,7 @@
 
 public interface IDeploySource
 {
-    Task<string?> GetScript(string scriptName);
+    Task<Script?> GetScript(string scriptName);
+
+    Task<IReadOnlyCollection<Script>> GetScripts();
 }

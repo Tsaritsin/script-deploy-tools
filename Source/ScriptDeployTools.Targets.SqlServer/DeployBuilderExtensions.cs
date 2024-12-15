@@ -1,4 +1,4 @@
-﻿namespace ScriptDeployTools.SqlServer;
+﻿namespace ScriptDeployTools.Targets.SqlServer;
 
 public static class DeployBuilderExtensions
 {
