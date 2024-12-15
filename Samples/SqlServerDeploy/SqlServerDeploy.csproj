@@ -22,8 +22,18 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Scripts\InitializeDatabase.sql" />
-      <EmbeddedResource Include="Scripts\InitializeDatabase.sql" />
+        <EmbeddedResource Include="Scripts/**/*.sql" />
+
+      <None Update="appsettings.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
+    <Target Name="CopyDevelopmentConfig"
+            BeforeTargets="Build">
+        <Copy SourceFiles="appsettings.Development.json"
+              DestinationFolder="$(OutputPath)"
+              Condition="Exists('appsettings.Development.json')"/>
+    </Target>
+    
 </Project>

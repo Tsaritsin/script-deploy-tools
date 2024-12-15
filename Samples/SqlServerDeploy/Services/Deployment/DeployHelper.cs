@@ -17,38 +17,47 @@ internal class DeployHelper(
 
     public async Task Deploy(CancellationToken cancellationToken)
     {
-        _logger.Information("Deploying...");
+        try
+        {
+            _logger.Information("Deploying...");
 
-        var connectionString = configuration.GetConnectionString();
+            var connectionString = configuration.GetConnectionString();
 
-        var deploySettings = new DeploySettings();
+            var deploySettings = new DeploySettings();
 
-        configuration
-            .GetSection(Constants.Infrastructure.ConnectionStrings.DeploySettings)
-            .Bind(deploySettings);
+            configuration
+                .GetSection(Constants.Infrastructure.ConnectionStrings.DeploySettings)
+                .Bind(deploySettings);
 
-        var deployService = new DeployBuilder()
-            .AddLogger(loggerFactory.CreateLogger<IDeploymentService>())
-            .FromEmbeddedResources(options =>
-            {
-                
-            })
-            .ToSqlServer(options =>
-            {
-                options.ConnectionString = connectionString;
-                options.DatabaseCreationScript = "InitializeDatabase.sql";
-                options.DatabaseName = deploySettings.DatabaseName;
-                options.DefaultFilePrefix = deploySettings.DefaultFilePrefix;
-                options.DataPath = deploySettings.DataPath;
-            })
-            .Build();
+            var deployService = new DeployBuilder()
+                .AddLogger(loggerFactory.CreateLogger<IDeploymentService>())
+                .FromEmbeddedResources(options =>
+                {
+                    options.Assemblies = [typeof(DeployHelper).Assembly];
+                    options.ScriptExtension = ".sql";
+                })
+                .ToSqlServer(options =>
+                {
+                    options.ConnectionString = connectionString;
+                    options.DatabaseCreationScript = "InitializeDatabase";
+                    options.DatabaseName = deploySettings.DatabaseName;
+                    options.DefaultFilePrefix = deploySettings.DefaultFilePrefix;
+                    options.DataPath = deploySettings.DataPath;
+                })
+                .Build();
 
-        await deployService.Deploy(cancellationToken);
+            await deployService.Deploy(cancellationToken);
 
-        _logger.Information("Deployment completed");
+            _logger.Information("Deployment completed");
+        }
+        catch (Exception ex)
+        {
+            _logger.Fatal(ex, "Something went wrong");
+        }
+
         // var upgrader = DeployChanges.To.SqlDatabase(connectionString)
         //     .WithScriptsAndCodeEmbeddedInAssembly(typeof(MyAssembly).Assembly)
-        //     .LogToConsole()        
+        //     .LogToConsole()
         //     .JournalToSqlWithHashing(scripts =>
         //
         //         scripts.WithPrefix("MyAssembly.Scripts.ByDate.")
