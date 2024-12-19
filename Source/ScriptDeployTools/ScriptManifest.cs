@@ -10,4 +10,6 @@ public class ScriptManifest
     public string? DependsOn { get; set; }
 
     public string? Description { get; set; }
+
+    public bool CanRepeat { get; set; }
 }

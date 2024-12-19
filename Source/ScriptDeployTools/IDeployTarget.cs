@@ -2,5 +2,7 @@
 
 public interface IDeployTarget
 {
-    Task PrepareToDeploy();
+    Task PrepareToDeploy(CancellationToken cancellationToken);
+
+    Task Deploy(CancellationToken cancellationToken);
 }

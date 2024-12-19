@@ -5,7 +5,17 @@ namespace ScriptDeployTools.Sources.Embedded;
 
 public class EmbeddedSourceOptions
 {
-    public IReadOnlyCollection<Assembly>? Assemblies { get; set; }
+    #region Assemblies
+
+    private List<Assembly> _assemblies = [];
+
+    public IReadOnlyCollection<Assembly> Assemblies
+    {
+        get => _assemblies;
+        set => _assemblies = value.ToList();
+    }
+
+    #endregion
 
     #region Filter
 

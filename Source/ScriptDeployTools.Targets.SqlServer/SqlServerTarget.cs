@@ -1,4 +1,6 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System.Security.Cryptography;
+using System.Text;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 
 namespace ScriptDeployTools.Targets.SqlServer;
@@ -8,23 +10,41 @@ internal class SqlServerTarget(
     IDeploySource scriptSource,
     SqlServerTargetOptions options) : IDeployTarget
 {
-    public async Task PrepareToDeploy()
+    private readonly EmbeddedScriptsHelper _embeddedScriptsHelper = new(logger);
+
+    public async Task PrepareToDeploy(CancellationToken cancellationToken)
     {
         var databaseExists = await DatabaseExists(
             options.ConnectionString ?? throw new ArgumentNullException(nameof(options.ConnectionString)));
 
-        if (databaseExists)
-            return;
-
-        var builder = new SqlConnectionStringBuilder(options.ConnectionString)
+        if (!databaseExists)
         {
-            InitialCatalog = "master"
-        };
+            var builder = new SqlConnectionStringBuilder(options.ConnectionString)
+            {
+                InitialCatalog = "master"
+            };
 
-        await CreateDatabase(builder.ConnectionString);
+            await CreateDatabase(builder.ConnectionString, cancellationToken);
+
+            await CreateVersionTable(cancellationToken);
+        }
+        else
+        {
+            var tableExists = await VersionTableExists(cancellationToken);
+
+            if (!tableExists)
+            {
+                await CreateVersionTable(cancellationToken);
+            }
+        }
     }
 
-    private async Task CreateDatabase(string connectionString)
+    public async Task Deploy(CancellationToken cancellationToken)
+    {
+        var scripts = await scriptSource.GetScripts();
+    }
+
+    private async Task CreateDatabase(string connectionString, CancellationToken cancellationToken)
     {
         logger.LogDebug("Creating database: {connectionString}", connectionString);
 
@@ -48,24 +68,107 @@ internal class SqlServerTarget(
 
         await using var connection = new SqlConnection(connectionString);
 
-        try
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+
+        command.CommandText = script.Content;
+
+        command.Parameters.AddWithValue("DataPath", options.DataPath);
+        command.Parameters.AddWithValue("DefaultFilePrefix", options.DefaultFilePrefix);
+        command.Parameters.AddWithValue("DatabaseName", connection.Database);
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private async Task<bool> VersionTableExists(CancellationToken cancellationToken)
+    {
+        var script = await _embeddedScriptsHelper.GetScript("TableExists");
+
+        if (script is null)
+            throw new InvalidOperationException("TableExists script is not found");
+
+        await using var connection = new SqlConnection(options.ConnectionString);
+
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+
+        command.CommandText = script.Content;
+
+        command.Parameters.AddWithValue("VersionTableSchema", options.VersionTableSchema);
+        command.Parameters.AddWithValue("VersionTableName", options.VersionTableName);
+
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+
+        return Convert.ToBoolean(result);
+    }
+
+    private async Task CreateVersionTable(CancellationToken cancellationToken)
+    {
+        var script = await _embeddedScriptsHelper.GetScript("InitializeVersionTable");
+
+        if (script is null)
+            throw new InvalidOperationException("InitializeVersionTable script is not found");
+
+        await using var connection = new SqlConnection(options.ConnectionString);
+
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+
+        command.CommandText = script.Content;
+
+        command.Parameters.AddWithValue("VersionTableSchema", options.VersionTableSchema);
+        command.Parameters.AddWithValue("VersionTableName", options.VersionTableName);
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
+
+        await InsertVersionTable(script, cancellationToken);
+    }
+
+    private async Task InsertVersionTable(Script script, CancellationToken cancellationToken)
+    {
+        var scriptInsertMigration = await _embeddedScriptsHelper.GetScript("InsertMigration");
+
+        if (scriptInsertMigration is null)
+            throw new InvalidOperationException("InitializeVersionTable script is not found");
+
+        await using var connection = new SqlConnection(options.ConnectionString);
+
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+
+        command.CommandText = scriptInsertMigration.Content;
+
+        command.Parameters.AddWithValue("VersionTableSchema", options.VersionTableSchema);
+        command.Parameters.AddWithValue("VersionTableName", options.VersionTableName);
+        command.Parameters.AddWithValue("ScriptName", script.Manifest!.Name);
+
+        if (script.Manifest!.CanRepeat)
         {
-            connection.Open();
-
-            await using var command = connection.CreateCommand();
-
-            command.CommandText = script.Content;
-
-            command.Parameters.AddWithValue("@DataPath", options.DataPath);
-            command.Parameters.AddWithValue("@DefaultFilePrefix", options.DefaultFilePrefix);
-            command.Parameters.AddWithValue("@DatabaseName", connection.Database);
-
-            await command.ExecuteNonQueryAsync();
+            var contentsHash = GenerateHash(script.Content);
+            command.Parameters.AddWithValue("ContentsHash", contentsHash);
         }
-        catch (Exception ex)
+        else
         {
-            logger.LogCritical(ex, "Failed to create database");
+            command.Parameters.AddWithValue("ContentsHash", DBNull.Value);
         }
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Returns the SHA256 hash of the supplied content
+    /// </summary>
+    /// <returns>The hash.</returns>
+    /// <param name="content">Content.</param>
+    private static string GenerateHash(string content)
+    {
+        using var algorithm = SHA256.Create();
+
+        return Convert.ToBase64String(algorithm.ComputeHash(Encoding.UTF8.GetBytes(content)));
     }
 
     private async Task<bool> DatabaseExists(string connectionString)

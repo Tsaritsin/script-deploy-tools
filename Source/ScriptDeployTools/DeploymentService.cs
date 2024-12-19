@@ -11,7 +11,7 @@ internal class DeploymentService(
         try
         {
             logger.LogInformation("Prepare to deploy");
-            await target.PrepareToDeploy();
+            await target.PrepareToDeploy(cancellationToken);
             logger.LogDebug("Prepare completed");
         }
         catch (Exception ex)

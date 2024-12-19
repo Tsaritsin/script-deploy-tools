@@ -1,6 +1,6 @@
-﻿:setvar DataPath @DataPath
-:setvar DatabaseName @DatabaseName
-:setvar DefaultFilePrefix @DefaultFilePrefix
+﻿:SETVAR DataPath @DataPath
+:SETVAR DatabaseName @DatabaseName
+:SETVAR DefaultFilePrefix @DefaultFilePrefix
 
 CREATE DATABASE [$DatabaseName$]
     ON PRIMARY (

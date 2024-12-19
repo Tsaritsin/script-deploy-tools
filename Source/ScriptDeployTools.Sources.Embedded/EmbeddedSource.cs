@@ -235,7 +235,7 @@ internal class EmbeddedSource(
             return;
         }
 
-        var resources = GetResources(options.Assemblies!);
+        var resources = GetResources(options.Assemblies);
 
         foreach (var resource in resources)
         {
