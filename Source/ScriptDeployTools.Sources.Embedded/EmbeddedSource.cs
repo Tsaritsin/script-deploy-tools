@@ -1,4 +1,6 @@
 ﻿using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
@@ -22,50 +24,6 @@ internal class EmbeddedSource(
     #endregion
 
     #region Methods
-
-    /// <summary>
-    /// Retrieves a script by its name.
-    /// </summary>
-    /// <param name="scriptName">The name of the script to retrieve.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the requested script.</returns>
-    public Task<Script?> GetScript(string scriptName)
-    {
-        logger.LogDebug("Get script {scriptName}", scriptName);
-
-        LoadScripts();
-
-        var key = GetKey(scriptName);
-
-        if (!_scripts.TryGetValue(key, out var script))
-        {
-            logger.LogError("Script {scriptName} not found", scriptName);
-
-            return Task.FromResult<Script?>(null);
-        }
-
-        return Task.FromResult(script)!;
-    }
-
-    /// <summary>
-    /// Retrieves all loaded scripts.
-    /// </summary>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a read-only collection of scripts.</returns>
-    public Task<IReadOnlyCollection<Script>> GetScripts()
-    {
-        LoadScripts();
-
-        return Task.FromResult<IReadOnlyCollection<Script>>(_scripts.Values.ToArray());
-    }
-
-    /// <summary>
-    /// Generates a unique key for a script name by converting it to lowercase.
-    /// </summary>
-    /// <param name="scriptName">The name of the script.</param>
-    /// <returns>The normalized key for the script.</returns>
-    private string GetKey(string scriptName)
-    {
-        return scriptName.ToLowerInvariant();
-    }
 
     /// <summary>
     /// Retrieves and filters the resource names of the provided assemblies.
@@ -94,10 +52,12 @@ internal class EmbeddedSource(
     /// </summary>
     /// <param name="assembly">The assembly containing the resource.</param>
     /// <param name="resourceName">The name of the resource to extract.</param>
+    /// <param name="cancellationToken"></param>
     /// <returns>A tuple containing the resource's key, extension, and content.</returns>
-    private (string Key, string Extension, string Content) GetResourceContent(
+    private async Task<(string Key, string Extension, string Content)> GetResourceContent(
         Assembly assembly,
-        string resourceName)
+        string resourceName,
+        CancellationToken cancellationToken)
     {
         var scriptName = Path.GetFileNameWithoutExtension(resourceName);
 
@@ -105,13 +65,13 @@ internal class EmbeddedSource(
 
         var scriptExtension = Path.GetExtension(resourceName).ToLowerInvariant();
 
-        using var stream = assembly.GetManifestResourceStream(resourceName);
+        await using var stream = assembly.GetManifestResourceStream(resourceName);
 
         ArgumentNullException.ThrowIfNull(stream);
 
         using var resourceStreamReader = new StreamReader(stream, options.Encoding, true);
 
-        var resourceContent = resourceStreamReader.ReadToEnd();
+        var resourceContent = await resourceStreamReader.ReadToEndAsync(cancellationToken);
 
         return (
             Key: key,
@@ -160,30 +120,40 @@ internal class EmbeddedSource(
 
         var manifest = DeserializeManifest(manifestContent, key);
 
-        if (manifest != null)
+        if (manifest is null)
         {
-            return new Script(key, scriptContent)
-            {
-                Manifest = manifest
-            };
+            logger.LogError("Script {ScriptKey} has an invalid manifest", key);
+            return null;
         }
 
-        return null;
+        return new Script(key, scriptContent)
+        {
+            Name = manifest.Name,
+            DependsOn = manifest.DependsOn,
+            Description = manifest.Description,
+            CanRepeat = manifest.CanRepeat,
+            ContentsHash = GenerateHash(scriptContent)
+        };
     }
 
     /// <summary>
     /// Extracts and organizes script and manifest contents from an assembly's resources.
     /// </summary>
     /// <param name="assemblyResources">A tuple containing an assembly and its resource names.</param>
+    /// <param name="cancellationToken"></param>
     /// <returns>A dictionary mapping script keys to their associated resource contents.</returns>
-    private Dictionary<string, Dictionary<string, string>> GetAssemblyScriptsContents(
-        (Assembly Assembly, string[] ResourceNames) assemblyResources)
+    private async Task<Dictionary<string, Dictionary<string, string>>> GetAssemblyScriptsContents(
+        (Assembly Assembly, string[] ResourceNames) assemblyResources,
+        CancellationToken cancellationToken)
     {
         var scriptAndManifestContents = new Dictionary<string, Dictionary<string, string>>();
 
         foreach (var resourceName in assemblyResources.ResourceNames)
         {
-            var resourceContent = GetResourceContent(assemblyResources.Assembly, resourceName);
+            if (cancellationToken.IsCancellationRequested)
+                break;
+
+            var resourceContent = await GetResourceContent(assemblyResources.Assembly, resourceName, cancellationToken);
 
             if (scriptAndManifestContents.TryGetValue(resourceContent.Key, out var contents))
             {
@@ -196,7 +166,7 @@ internal class EmbeddedSource(
                     { resourceContent.Extension, resourceContent.Content }
                 };
             }
-        }
+        } // foreach (var resourceName in assemblyResources.ResourceNames)
 
         return scriptAndManifestContents;
     }
@@ -205,17 +175,22 @@ internal class EmbeddedSource(
     /// Parses the resources of an assembly, creating scripts from the available resources.
     /// </summary>
     /// <param name="assemblyResources">A tuple containing an assembly and its resource names.</param>
-    private void ParseAssemblyResources((Assembly Assembly, string[] ResourceNames) assemblyResources)
+    /// <param name="cancellationToken"></param>
+    private async Task ParseAssemblyResources((Assembly Assembly, string[] ResourceNames) assemblyResources,
+                                              CancellationToken cancellationToken)
     {
         logger.LogDebug(
             "Found {count} resource(s) in {assembly}",
             assemblyResources.ResourceNames.Length,
             assemblyResources.Assembly.FullName);
 
-        var scriptAndManifestContents = GetAssemblyScriptsContents(assemblyResources);
+        var scriptAndManifestContents = await GetAssemblyScriptsContents(assemblyResources, cancellationToken);
 
         foreach (var scriptAndManifest in scriptAndManifestContents)
         {
+            if (cancellationToken.IsCancellationRequested)
+                break;
+
             var script = CreateScript(scriptAndManifest.Key, scriptAndManifest.Value);
 
             if (script is not null)
@@ -228,7 +203,7 @@ internal class EmbeddedSource(
     /// <summary>
     /// Loads scripts from the configured assemblies if they are not already loaded.
     /// </summary>
-    private void LoadScripts()
+    private async Task LoadScripts(CancellationToken cancellationToken)
     {
         if (_scripts.Count != 0)
         {
@@ -239,8 +214,68 @@ internal class EmbeddedSource(
 
         foreach (var resource in resources)
         {
-            ParseAssemblyResources(resource);
+            if (cancellationToken.IsCancellationRequested)
+                break;
+
+            await ParseAssemblyResources(resource, cancellationToken);
         }
+    }
+
+    #endregion
+
+    #region Implemented IDeploySource
+
+    /// <summary>
+    /// Retrieves a script by its name.
+    /// </summary>
+    /// <param name="scriptKey">The key of the script to retrieve.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the requested script.</returns>
+    public async Task<Script?> GetScript(string scriptKey, CancellationToken cancellationToken)
+    {
+        logger.LogDebug("Get script {scriptKey}", scriptKey);
+
+        await LoadScripts(cancellationToken);
+
+        if (_scripts.TryGetValue(scriptKey, out var script))
+            return script;
+
+        logger.LogError("Script {scriptKey} not found", scriptKey);
+
+        return null;
+    }
+
+    /// <summary>
+    /// Retrieves all loaded scripts.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a read-only collection of scripts.</returns>
+    public async Task<IDictionary<string, Script>> GetScripts(CancellationToken cancellationToken)
+    {
+        await LoadScripts(cancellationToken);
+
+        return _scripts;
+    }
+
+    /// <summary>
+    /// Generates a unique key for a script name by converting it to lowercase.
+    /// </summary>
+    /// <param name="scriptName">The name of the script.</param>
+    /// <returns>The normalized key for the script.</returns>
+    public string GetKey(string scriptName)
+    {
+        return scriptName.ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Returns the SHA256 hash of the supplied content
+    /// </summary>
+    /// <returns>The hash.</returns>
+    /// <param name="content">Content.</param>
+    public string GenerateHash(string content)
+    {
+        using var algorithm = SHA256.Create();
+
+        return Convert.ToBase64String(algorithm.ComputeHash(Encoding.UTF8.GetBytes(content)));
     }
 
     #endregion

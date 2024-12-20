@@ -9,6 +9,8 @@ public static class DeployBuilderExtensions
 
         applyOptions(options);
 
+        ArgumentNullException.ThrowIfNull(options.ConnectionString);
+
         builder.Target = new SqlServerTarget(
             builder.Logger ?? throw new ArgumentNullException(nameof(builder.Logger)),
             builder.Source ?? throw new ArgumentNullException(nameof(builder.Source)),

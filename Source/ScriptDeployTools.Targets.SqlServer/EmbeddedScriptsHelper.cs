@@ -16,25 +16,23 @@ internal class EmbeddedScriptsHelper(
 
     #endregion
 
-    public Task<Script?> GetScript(string scriptName)
+    public async Task<Script?> GetScript(string scriptName, CancellationToken cancellationToken)
     {
         logger.LogDebug("Get script {scriptName}", scriptName);
 
-        LoadScripts();
+        await LoadScripts(cancellationToken);
 
         var key = GetKey(scriptName);
 
-        if (!_scripts.TryGetValue(key, out var script))
-        {
-            logger.LogError("Script {scriptName} not found", scriptName);
+        if (_scripts.TryGetValue(key, out var script))
+            return script;
 
-            return Task.FromResult<Script?>(null);
-        }
+        logger.LogError("Script {scriptName} not found", scriptName);
 
-        return Task.FromResult(script)!;
+        return null;
     }
 
-    private void LoadScripts()
+    private async Task LoadScripts(CancellationToken cancellationToken)
     {
         if (_scripts.Count != 0)
         {
@@ -51,29 +49,28 @@ internal class EmbeddedScriptsHelper(
 
             var key = GetKey(scriptName);
 
-            var content = GetResourceContent(assembly, resourceName);
+            var content = await GetResourceContent(assembly, resourceName, cancellationToken);
 
             var script = new Script(key, content)
             {
-                Manifest = new ScriptManifest
-                {
-                    Name = scriptName
-                }
+                Name = scriptName
             };
 
             _scripts.Add(key, script);
         }
     }
 
-    private string GetResourceContent(Assembly assembly, string resourceName)
+    private static async Task<string> GetResourceContent(Assembly assembly,
+                                                         string resourceName,
+                                                         CancellationToken cancellationToken)
     {
-        using var stream = assembly.GetManifestResourceStream(resourceName);
+        await using var stream = assembly.GetManifestResourceStream(resourceName);
 
         ArgumentNullException.ThrowIfNull(stream);
 
         using var resourceStreamReader = new StreamReader(stream, Encoding.UTF8, true);
 
-        var resourceContent = resourceStreamReader.ReadToEnd();
+        var resourceContent = await resourceStreamReader.ReadToEndAsync(cancellationToken);
 
         return resourceContent;
     }
@@ -83,7 +80,7 @@ internal class EmbeddedScriptsHelper(
     /// </summary>
     /// <param name="scriptName">The name of the script.</param>
     /// <returns>The normalized key for the script.</returns>
-    private string GetKey(string scriptName)
+    private static string GetKey(string scriptName)
     {
         return scriptName.ToLowerInvariant();
     }

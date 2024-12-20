@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 
 namespace ScriptDeployTools.Targets.SqlServer;
@@ -10,43 +8,22 @@ internal class SqlServerTarget(
     IDeploySource scriptSource,
     SqlServerTargetOptions options) : IDeployTarget
 {
+    #region Fields
+
     private readonly EmbeddedScriptsHelper _embeddedScriptsHelper = new(logger);
 
-    public async Task PrepareToDeploy(CancellationToken cancellationToken)
-    {
-        var databaseExists = await DatabaseExists(
-            options.ConnectionString ?? throw new ArgumentNullException(nameof(options.ConnectionString)));
+    #endregion
 
-        if (!databaseExists)
+    #region Methods
+
+    private async Task CreateDatabase(CancellationToken cancellationToken)
+    {
+        logger.LogDebug("Creating database: {connectionString}", options.ConnectionString);
+
+        var builder = new SqlConnectionStringBuilder(options.ConnectionString)
         {
-            var builder = new SqlConnectionStringBuilder(options.ConnectionString)
-            {
-                InitialCatalog = "master"
-            };
-
-            await CreateDatabase(builder.ConnectionString, cancellationToken);
-
-            await CreateVersionTable(cancellationToken);
-        }
-        else
-        {
-            var tableExists = await VersionTableExists(cancellationToken);
-
-            if (!tableExists)
-            {
-                await CreateVersionTable(cancellationToken);
-            }
-        }
-    }
-
-    public async Task Deploy(CancellationToken cancellationToken)
-    {
-        var scripts = await scriptSource.GetScripts();
-    }
-
-    private async Task CreateDatabase(string connectionString, CancellationToken cancellationToken)
-    {
-        logger.LogDebug("Creating database: {connectionString}", connectionString);
+            InitialCatalog = "master"
+        };
 
         var canCreateDatabase = !string.IsNullOrWhiteSpace(options.DatabaseCreationScript) &&
                                 !string.IsNullOrWhiteSpace(options.DataPath) &&
@@ -61,12 +38,14 @@ internal class SqlServerTarget(
         if (!directoryExists)
             throw new InvalidOperationException($"Data path '{options.DataPath}' does not exist");
 
-        var script = await scriptSource.GetScript(options.DatabaseCreationScript!);
+        var scriptKey = scriptSource.GetKey(options.DatabaseCreationScript!);
+
+        var script = await scriptSource.GetScript(scriptKey, cancellationToken);
 
         if (script is null)
             throw new InvalidOperationException($"Database creation script '{options.DatabaseCreationScript}' is not found");
 
-        await using var connection = new SqlConnection(connectionString);
+        await using var connection = new SqlConnection(builder.ConnectionString);
 
         await connection.OpenAsync(cancellationToken);
 
@@ -83,7 +62,7 @@ internal class SqlServerTarget(
 
     private async Task<bool> VersionTableExists(CancellationToken cancellationToken)
     {
-        var script = await _embeddedScriptsHelper.GetScript("TableExists");
+        var script = await _embeddedScriptsHelper.GetScript("TableExists", cancellationToken);
 
         if (script is null)
             throw new InvalidOperationException("TableExists script is not found");
@@ -106,7 +85,7 @@ internal class SqlServerTarget(
 
     private async Task CreateVersionTable(CancellationToken cancellationToken)
     {
-        var script = await _embeddedScriptsHelper.GetScript("InitializeVersionTable");
+        var script = await _embeddedScriptsHelper.GetScript("InitializeVersionTable", cancellationToken);
 
         if (script is null)
             throw new InvalidOperationException("InitializeVersionTable script is not found");
@@ -129,7 +108,7 @@ internal class SqlServerTarget(
 
     private async Task InsertVersionTable(Script script, CancellationToken cancellationToken)
     {
-        var scriptInsertMigration = await _embeddedScriptsHelper.GetScript("InsertMigration");
+        var scriptInsertMigration = await _embeddedScriptsHelper.GetScript("InsertMigration", cancellationToken);
 
         if (scriptInsertMigration is null)
             throw new InvalidOperationException("InitializeVersionTable script is not found");
@@ -144,11 +123,11 @@ internal class SqlServerTarget(
 
         command.Parameters.AddWithValue("VersionTableSchema", options.VersionTableSchema);
         command.Parameters.AddWithValue("VersionTableName", options.VersionTableName);
-        command.Parameters.AddWithValue("ScriptName", script.Manifest!.Name);
+        command.Parameters.AddWithValue("ScriptName", script.Name);
 
-        if (script.Manifest!.CanRepeat)
+        if (script.CanRepeat)
         {
-            var contentsHash = GenerateHash(script.Content);
+            var contentsHash = scriptSource.GenerateHash(script.Content);
             command.Parameters.AddWithValue("ContentsHash", contentsHash);
         }
         else
@@ -159,27 +138,15 @@ internal class SqlServerTarget(
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// Returns the SHA256 hash of the supplied content
-    /// </summary>
-    /// <returns>The hash.</returns>
-    /// <param name="content">Content.</param>
-    private static string GenerateHash(string content)
+    private async Task<bool> DatabaseExists(CancellationToken cancellationToken)
     {
-        using var algorithm = SHA256.Create();
+        logger.LogDebug("Checking if database exists: {connectionString}", options.ConnectionString);
 
-        return Convert.ToBase64String(algorithm.ComputeHash(Encoding.UTF8.GetBytes(content)));
-    }
-
-    private async Task<bool> DatabaseExists(string connectionString)
-    {
-        logger.LogDebug("Checking if database exists: {connectionString}", connectionString);
-
-        await using var connection = new SqlConnection(connectionString);
+        await using var connection = new SqlConnection(options.ConnectionString);
 
         try
         {
-            connection.Open();
+            await connection.OpenAsync(cancellationToken);
             return true;
         }
         catch (SqlException)
@@ -187,4 +154,36 @@ internal class SqlServerTarget(
             return false;
         }
     }
+
+    #endregion
+
+    #region Implementation IDeployTarget
+
+    public async Task PrepareToDeploy(CancellationToken cancellationToken)
+    {
+        var databaseExists = await DatabaseExists(cancellationToken);
+
+        if (!databaseExists)
+        {
+            await CreateDatabase(cancellationToken);
+
+            await CreateVersionTable(cancellationToken);
+        }
+        else
+        {
+            var tableExists = await VersionTableExists(cancellationToken);
+
+            if (!tableExists)
+            {
+                await CreateVersionTable(cancellationToken);
+            }
+        }
+    }
+
+    public async Task Deploy(CancellationToken cancellationToken)
+    {
+        var scripts = await scriptSource.GetScripts(cancellationToken);
+    }
+
+    #endregion
 }
