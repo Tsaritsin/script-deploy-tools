@@ -1,0 +1,6 @@
+﻿{
+  "Name": "InitializeDatabase",
+  "DependsOn": null,
+  "Description": "Script to create database",
+  "CanRepeat": false
+}

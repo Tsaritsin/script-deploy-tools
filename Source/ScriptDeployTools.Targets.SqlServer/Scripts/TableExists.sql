@@ -1,7 +1,7 @@
-﻿:SETVAR VersionTableSchema @VersionTableSchema
-:SETVAR VersionTableName @VersionTableName
+﻿-- :SETVAR VersionTableSchema N''
+-- :SETVAR VersionTableName N''
 
-SELECT 1
+SELECT CAST(1 AS BIT) AS IsExists
 FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_NAME = '$(VersionTableName)'
   AND TABLE_SCHEMA = '$(VersionTableSchema)'

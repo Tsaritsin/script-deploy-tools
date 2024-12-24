@@ -1,5 +1,5 @@
-﻿:SETVAR VersionTableSchema @VersionTableSchema
-:SETVAR VersionTableName @VersionTableName
+﻿-- :SETVAR VersionTableSchema N''
+-- :SETVAR VersionTableName N''
 
 CREATE TABLE $(VersionTableSchema).$(VersionTableName) (
     ScriptName   NVARCHAR(255) NOT NULL,

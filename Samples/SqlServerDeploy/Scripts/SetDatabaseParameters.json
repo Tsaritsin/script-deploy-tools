@@ -1,0 +1,6 @@
+﻿{
+  "Name": "SetDatabaseParameters",
+  "DependsOn": null,
+  "Description": "Script to set database's parameters",
+  "CanRepeat": false
+}

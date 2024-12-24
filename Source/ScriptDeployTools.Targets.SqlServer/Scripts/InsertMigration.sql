@@ -1,9 +1,7 @@
-﻿:SETVAR VersionTableSchema @VersionTableSchema
-:SETVAR VersionTableName @VersionTableName
-:SETVAR ScriptName @ScriptName
-:SETVAR Applied @Applied
-:SETVAR ContentsHash @ContentsHash
+﻿-- :SETVAR VersionTableSchema N''
+-- :SETVAR VersionTableName N''
+-- :SETVAR ScriptName N''
+-- :SETVAR ContentsHash N''
 
 INSERT $(VersionTableSchema).$(VersionTableName)(ScriptName, Applied, ContentsHash)
-VALUES($(ScriptName), GETUTCDATE(), $(ContentsHash))
-GO
+VALUES(N'$(ScriptName)', GETUTCDATE(), N'$(ContentsHash)')

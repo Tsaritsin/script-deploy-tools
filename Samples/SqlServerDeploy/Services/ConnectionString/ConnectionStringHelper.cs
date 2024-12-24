@@ -38,7 +38,8 @@ internal static class ConnectionStringHelper
         {
             DataSource = settings.DataSource,
             InitialCatalog = settings.InitialCatalog,
-            IntegratedSecurity = settings.IntegratedSecurity
+            IntegratedSecurity = settings.IntegratedSecurity,
+            Pooling = false
         };
 
         if (!builder.IntegratedSecurity)

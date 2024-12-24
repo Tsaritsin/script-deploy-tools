@@ -39,7 +39,8 @@ internal class DeployHelper(
                 .ToSqlServer(options =>
                 {
                     options.ConnectionString = connectionString;
-                    options.DatabaseCreationScript = "InitializeDatabase";
+                    options.DatabaseCreationScript = "SqlServerDeploy.Scripts.InitializeDatabase";
+                    options.DatabaseParametersScript = "SqlServerDeploy.Scripts.SetDatabaseParameters";
                     options.DatabaseName = deploySettings.DatabaseName;
                     options.DefaultFilePrefix = deploySettings.DefaultFilePrefix;
                     options.DataPath = deploySettings.DataPath;

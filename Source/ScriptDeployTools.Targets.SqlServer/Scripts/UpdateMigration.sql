@@ -1,11 +1,9 @@
-﻿:SETVAR VersionTableSchema @VersionTableSchema
-:SETVAR VersionTableName @VersionTableName
-:SETVAR ScriptName @ScriptName
-:SETVAR Applied @Applied
-:SETVAR ContentsHash @ContentsHash
+﻿-- :SETVAR VersionTableSchema N''
+-- :SETVAR VersionTableName N''
+-- :SETVAR ScriptName N''
+-- :SETVAR ContentsHash N''
 
 UPDATE $(VersionTableSchema).$(VersionTableName)
 SET Applied = GETUTCDATE(),
-    ContentsHash = $(ContentsHash)
-WHERE ScriptName = $(ScriptName)
-GO
+    ContentsHash = N'$(ContentsHash)'
+WHERE ScriptName = N'$(ScriptName)'
