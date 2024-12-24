@@ -1,4 +1,4 @@
-﻿namespace ScriptDeployTools.Targets.SqlServer;
+﻿namespace ScriptDeployTools;
 
 internal class SortScriptsByDependenciesHelper
 {
