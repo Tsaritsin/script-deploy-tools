@@ -38,9 +38,9 @@ internal class SqlServerTarget(
         if (!directoryExists)
             throw new InvalidOperationException($"Data path '{options.DataPath}' does not exist");
 
-        var scriptKey = scriptSource.GetKey(options.DatabaseCreationScript!);
+        var scriptKey = EmbeddedScriptsHelper.GetKey(options.DatabaseCreationScript!);
 
-        var script = await scriptSource.GetScript(scriptKey, cancellationToken);
+        var script = await _embeddedScriptsHelper.GetScript(scriptKey, cancellationToken);
 
         if (script is null)
             throw new InvalidOperationException($"Database creation script '{options.DatabaseCreationScript}' is not found");
@@ -62,7 +62,9 @@ internal class SqlServerTarget(
 
     private async Task<bool> VersionTableExists(CancellationToken cancellationToken)
     {
-        var script = await _embeddedScriptsHelper.GetScript("TableExists", cancellationToken);
+        var scriptKey = EmbeddedScriptsHelper.GetKey("TableExists");
+
+        var script = await _embeddedScriptsHelper.GetScript(scriptKey, cancellationToken);
 
         if (script is null)
             throw new InvalidOperationException("TableExists script is not found");
@@ -85,7 +87,9 @@ internal class SqlServerTarget(
 
     private async Task CreateVersionTable(CancellationToken cancellationToken)
     {
-        var script = await _embeddedScriptsHelper.GetScript("InitializeVersionTable", cancellationToken);
+        var scriptKey = EmbeddedScriptsHelper.GetKey("InitializeVersionTable");
+
+        var script = await _embeddedScriptsHelper.GetScript(scriptKey, cancellationToken);
 
         if (script is null)
             throw new InvalidOperationException("InitializeVersionTable script is not found");
@@ -108,7 +112,9 @@ internal class SqlServerTarget(
 
     private async Task InsertVersionTable(Script script, CancellationToken cancellationToken)
     {
-        var scriptInsertMigration = await _embeddedScriptsHelper.GetScript("InsertMigration", cancellationToken);
+        var scriptKey = EmbeddedScriptsHelper.GetKey("InsertMigration");
+
+        var scriptInsertMigration = await _embeddedScriptsHelper.GetScript(scriptKey, cancellationToken);
 
         if (scriptInsertMigration is null)
             throw new InvalidOperationException("InitializeVersionTable script is not found");

@@ -80,7 +80,7 @@ internal class EmbeddedScriptsHelper(
     /// </summary>
     /// <param name="scriptName">The name of the script.</param>
     /// <returns>The normalized key for the script.</returns>
-    private static string GetKey(string scriptName)
+    public static string GetKey(string scriptName)
     {
         return scriptName.ToLowerInvariant();
     }
