@@ -293,6 +293,8 @@ internal class SqlServerTarget(
     public async Task Deploy(CancellationToken cancellationToken)
     {
         var scripts = await scriptSource.GetScripts(cancellationToken);
+
+        var sortedScripts = SortScriptsByDependenciesHelper.Sort(scripts);
     }
 
     #endregion

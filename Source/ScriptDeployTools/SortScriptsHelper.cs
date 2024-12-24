@@ -1,6 +1,6 @@
 ﻿namespace ScriptDeployTools;
 
-internal class SortScriptsByDependenciesHelper
+public class SortScriptsByDependenciesHelper
 {
     #region Fields
 

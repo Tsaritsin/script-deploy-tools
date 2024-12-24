@@ -1,0 +1,6 @@
+﻿{
+  "Name": "IDENTITY_Common",
+  "DependsOn": "Initialized",
+  "Description": "Create sequence of identifiers",
+  "CanRepeat": false
+}
