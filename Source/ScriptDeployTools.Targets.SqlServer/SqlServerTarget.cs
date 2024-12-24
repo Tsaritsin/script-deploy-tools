@@ -243,6 +243,7 @@ internal class SqlServerTarget(
         logger.LogDebug("Added migration {MigrationName}, hash: {ContentsHash}",
             script.Name,
             parameters[ParameterNames.ContentsHash]);
+        
     }
 
     private async Task<bool> DatabaseExists(CancellationToken cancellationToken)
