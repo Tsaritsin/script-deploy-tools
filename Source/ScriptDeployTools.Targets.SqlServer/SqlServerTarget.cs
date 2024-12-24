@@ -198,7 +198,8 @@ internal class SqlServerTarget(
             options.VersionTableSchema,
             options.VersionTableName);
 
-        script.Name = "Initialized";
+        script.Name = ScriptDeployTools.Constants.RootScript.Name;
+
         await InsertVersionTable(script, cancellationToken);
     }
 
@@ -243,7 +244,6 @@ internal class SqlServerTarget(
         logger.LogDebug("Added migration {MigrationName}, hash: {ContentsHash}",
             script.Name,
             parameters[ParameterNames.ContentsHash]);
-        
     }
 
     private async Task<bool> DatabaseExists(CancellationToken cancellationToken)
