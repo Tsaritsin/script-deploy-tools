@@ -200,10 +200,10 @@ internal class SqlServerTarget(
 
         script.Name = ScriptDeployTools.Constants.RootScript.Name;
 
-        await InsertVersionTable(script, cancellationToken);
+        await InsertToVersionTable(script, cancellationToken);
     }
 
-    private async Task InsertVersionTable(Script script, CancellationToken cancellationToken)
+    private async Task InsertToVersionTable(Script script, CancellationToken cancellationToken)
     {
         logger.LogDebug("Add migration {MigrationName}", script.Name);
 
@@ -290,11 +290,59 @@ internal class SqlServerTarget(
         }
     }
 
-    public async Task Deploy(CancellationToken cancellationToken)
+    public async Task<IReadOnlyCollection<ScriptDeployed>> GetDeployedScripts(CancellationToken cancellationToken)
     {
-        var scripts = await scriptSource.GetScripts(cancellationToken);
+        logger.LogDebug("Get applied migrations");
 
-        var sortedScripts = SortScriptsByDependenciesHelper.Sort(scripts);
+        var scriptKey = EmbeddedScriptsHelper.GetKey(ScriptNames.GetDeployedScripts);
+
+        var script = await _embeddedScriptsHelper.GetScript(scriptKey, cancellationToken);
+
+        if (script is null)
+            throw new InvalidOperationException("GetDeployedScripts script is not found");
+
+        await using var connection = new SqlConnection(options.ConnectionString);
+
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+
+        command.CommandText = SetParameters(script.Content, new Dictionary<string, object>
+        {
+            { ParameterNames.VersionTableSchema, options.VersionTableSchema },
+            { ParameterNames.VersionTableName, options.VersionTableName }
+        });
+
+        var result = new List<ScriptDeployed>();
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            result.Add(new ScriptDeployed(reader.FromDb("ScriptName", string.Empty))
+            {
+                ContentsHash = reader.FromDb<string>("ContentsHash")
+            });
+        }
+
+        logger.LogDebug("Found {CountAppliedMigrations} applied migrations", result.Count);
+
+        return result;
+    }
+
+    public async Task DeployScript(Script script, CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Deploy {ScriptName}", script.Name);
+
+        await using var connection = new SqlConnection(options.ConnectionString);
+
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+
+        command.CommandText = script.Content;
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     #endregion

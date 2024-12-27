@@ -4,5 +4,7 @@ public interface IDeployTarget
 {
     Task PrepareToDeploy(CancellationToken cancellationToken);
 
-    Task Deploy(CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<ScriptDeployed>> GetDeployedScripts(CancellationToken cancellationToken);
+
+    Task DeployScript(Script script, CancellationToken cancellationToken);
 }
