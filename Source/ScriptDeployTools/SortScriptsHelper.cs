@@ -83,7 +83,7 @@ public class SortScriptsByDependenciesHelper
     /// </summary>
     /// <param name="scripts">The list of script manifests to sort.</param>
     /// <returns>A sorted list of script manifests in dependency order.</returns>
-    public IReadOnlyCollection<Script> SortScriptsByDependencies(IDictionary<string, Script> scripts)
+    private IReadOnlyCollection<Script> SortScriptsByDependencies(IDictionary<string, Script> scripts)
     {
         Reset();
 
@@ -101,9 +101,17 @@ public class SortScriptsByDependenciesHelper
         // Get scripts by order from stack
         var orderedKeys = _stack.ToList();
 
-        return orderedKeys
-            .Select(item => scripts[item])
-            .ToArray();
+        var orderedScripts = new List<Script>();
+
+        foreach (var key in orderedKeys)
+        {
+            if (scripts.TryGetValue(key, out var script))
+            {
+                orderedScripts.Add(script);
+            }
+        }
+
+        return orderedScripts;
     }
 
     #endregion

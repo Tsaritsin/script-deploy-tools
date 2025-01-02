@@ -36,7 +36,7 @@ internal class DeploymentService(
                                     IList<ScriptDeployed> deployedScripts,
                                     CancellationToken cancellationToken)
     {
-        var dependencyIsDeployed = script.DependsOn is not null ||
+        var dependencyIsDeployed = script.DependsOn is null ||
                                    deployedScripts.Any(item => item.Name.Equals(
                                        script.DependsOn,
                                        StringComparison.OrdinalIgnoreCase));
