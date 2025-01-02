@@ -290,7 +290,7 @@ internal class SqlServerTarget(
         }
     }
 
-    public async Task<IReadOnlyCollection<ScriptDeployed>> GetDeployedScripts(CancellationToken cancellationToken)
+    public async Task<List<ScriptDeployed>> GetDeployedScripts(CancellationToken cancellationToken)
     {
         logger.LogDebug("Get applied migrations");
 
