@@ -126,7 +126,7 @@ internal class DeploymentService(
             logger.LogInformation("No scripts to deploy");
         }
 
-        var sortedScripts = SortScriptsByDependenciesHelper.Sort(scriptsToDeploy);
+        var sortedScripts = SortScriptsHelper.Sort(scriptsToDeploy);
 
         result.AddRange(sortedScripts);
 

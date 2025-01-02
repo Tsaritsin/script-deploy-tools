@@ -1,6 +1,16 @@
 ﻿namespace ScriptDeployTools;
 
-public class SortScriptsByDependenciesHelper
+public static class SortScriptsHelper
+{
+    public static IReadOnlyCollection<Script> Sort(IDictionary<string, Script> scripts)
+    {
+        var helper = new SortScriptsByDependenciesHelper();
+
+        return helper.Sort(scripts);
+    }
+}
+
+internal class SortScriptsByDependenciesHelper
 {
     #region Fields
 
@@ -12,13 +22,6 @@ public class SortScriptsByDependenciesHelper
     #endregion
 
     #region Methods
-
-    public static IReadOnlyCollection<Script> Sort(IDictionary<string, Script> scripts)
-    {
-        var helper = new SortScriptsByDependenciesHelper();
-
-        return helper.SortScriptsByDependencies(scripts);
-    }
 
     /// <summary>
     ///     Loads the graph structure from a list of script manifests.
@@ -83,7 +86,7 @@ public class SortScriptsByDependenciesHelper
     /// </summary>
     /// <param name="scripts">The list of script manifests to sort.</param>
     /// <returns>A sorted list of script manifests in dependency order.</returns>
-    private IReadOnlyCollection<Script> SortScriptsByDependencies(IDictionary<string, Script> scripts)
+    public IReadOnlyCollection<Script> Sort(IDictionary<string, Script> scripts)
     {
         Reset();
 
