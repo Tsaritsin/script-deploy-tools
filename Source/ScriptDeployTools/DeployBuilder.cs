@@ -16,6 +16,7 @@ public class DeployBuilder : IDeployBuilder
             ? factory()
             : new DeploymentService(
                 Logger ?? throw new InvalidOperationException("Logger must be set"),
+                Source ?? throw new InvalidOperationException("Source must be set"),
                 Target ?? throw new InvalidOperationException("Target must be set"));
     }
 }
