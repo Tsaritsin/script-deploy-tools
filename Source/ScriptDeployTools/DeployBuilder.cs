@@ -10,13 +10,11 @@ public class DeployBuilder : IDeployBuilder
 
     public IDeployTarget? Target { get; set; }
 
-    public IDeploymentService Build(Func<IDeploymentService>? factory = null)
+    public IDeploymentService Build()
     {
-        return factory != null
-            ? factory()
-            : new DeploymentService(
-                Logger ?? throw new InvalidOperationException("Logger must be set"),
-                Source ?? throw new InvalidOperationException("Source must be set"),
-                Target ?? throw new InvalidOperationException("Target must be set"));
+        return new DeploymentService(
+            Logger ?? throw new InvalidOperationException("Logger must be set"),
+            Source ?? throw new InvalidOperationException("Source must be set"),
+            Target ?? throw new InvalidOperationException("Target must be set"));
     }
 }

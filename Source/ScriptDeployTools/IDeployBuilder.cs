@@ -10,5 +10,5 @@ public interface IDeployBuilder
 
     public IDeployTarget? Target { get; set; }
 
-    IDeploymentService Build(Func<IDeploymentService>? factory = null);
+    IDeploymentService Build();
 }
