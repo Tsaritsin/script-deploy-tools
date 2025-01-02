@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptDeployTools.Targets.S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptDeployTools.Sources.Embedded", "ScriptDeployTools.Sources.Embedded\ScriptDeployTools.Sources.Embedded.csproj", "{C00EE6B2-6CA7-444A-87C6-FF4B85B1911C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptDeployTools.Tests", "..\Tests\ScriptDeployTools.Tests\ScriptDeployTools.Tests.csproj", "{C1E13479-97AA-4917-B1C0-2F3787840914}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,5 +37,9 @@ Global
 		{C00EE6B2-6CA7-444A-87C6-FF4B85B1911C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C00EE6B2-6CA7-444A-87C6-FF4B85B1911C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C00EE6B2-6CA7-444A-87C6-FF4B85B1911C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1E13479-97AA-4917-B1C0-2F3787840914}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1E13479-97AA-4917-B1C0-2F3787840914}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1E13479-97AA-4917-B1C0-2F3787840914}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1E13479-97AA-4917-B1C0-2F3787840914}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
