@@ -75,7 +75,7 @@ internal class DeploymentService(
             return result;
         }
 
-        var scripsToDeploy = new Dictionary<string, Script>();
+        var scriptsToDeploy = new Dictionary<string, Script>();
 
         foreach (var script in scripts)
         {
@@ -85,12 +85,8 @@ internal class DeploymentService(
 
             if (deployedScript != null)
             {
-                var canRepeat = script.Value.CanRepeat &&
-                                script.Value.ContentsHash is not null &&
-                                deployedScript.ContentsHash is not null &&
-                                !deployedScript.ContentsHash.Equals(
-                                    script.Value.ContentsHash,
-                                    StringComparison.OrdinalIgnoreCase);
+                var canRepeat = CanBeDeployedAgain(script.Value, deployedScript);
+
                 if (!canRepeat)
                 {
                     logger.LogInformation($"Script {script.Value.Name} is already deployed");
@@ -100,20 +96,30 @@ internal class DeploymentService(
                 logger.LogDebug($"Script {script.Value.Name} is already deployed, but can be repeated");
             }
 
-            scripsToDeploy.Add(script.Key, script.Value);
+            scriptsToDeploy.Add(script.Key, script.Value);
         }
 
-        if (scripsToDeploy.Count == 0)
+        if (scriptsToDeploy.Count == 0)
         {
             logger.LogInformation("No scripts to deploy");
         }
 
-        var sortedScripts = SortScriptsByDependenciesHelper.Sort(scripsToDeploy);
+        var sortedScripts = SortScriptsByDependenciesHelper.Sort(scriptsToDeploy);
 
         result.AddRange(sortedScripts);
 
-        logger.LogDebug("Found {ScripsToDeployCount} scripts to deploying", sortedScripts.Count);
+        logger.LogDebug("Found {ScriptsToDeployCount} scripts to deploying", sortedScripts.Count);
 
         return result;
+    }
+
+    private static bool CanBeDeployedAgain(Script script, ScriptDeployed deployedScript)
+    {
+        return script.CanRepeat &&
+               !string.IsNullOrEmpty(script.ContentsHash) &&
+               !string.IsNullOrEmpty(deployedScript.ContentsHash) &&
+               !deployedScript.ContentsHash.Equals(
+                   script.ContentsHash,
+                   StringComparison.OrdinalIgnoreCase);
     }
 }
