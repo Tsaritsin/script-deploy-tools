@@ -4,9 +4,6 @@ namespace ScriptDeployTools;
 
 /// <summary>
 /// Provides services for deploying scripts, managing dependencies, and logging deployment progress.
-/// </summary>
-
-/// <summary>
 /// Represents the implementation of the deployment service responsible for handling script deployment processes.
 /// </summary>
 internal class DeploymentService(
@@ -14,12 +11,12 @@ internal class DeploymentService(
     IDeploySource scriptSource,
     IDeployTarget target) : IDeploymentService
 {
-/// <summary>
-/// Initiates the deployment process, prepares the deployment target, determines the scripts to deploy, 
-/// and handles script deployments while logging relevant information.
-/// </summary>
-/// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
-public async Task Deploy(CancellationToken cancellationToken)
+    /// <summary>
+    /// Initiates the deployment process, prepares the deployment target, determines the scripts to deploy,
+    /// and handles script deployments while logging relevant information.
+    /// </summary>
+    /// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
+    public async Task Deploy(CancellationToken cancellationToken)
     {
         try
         {
@@ -44,13 +41,13 @@ public async Task Deploy(CancellationToken cancellationToken)
         }
     }
 
-/// <summary>
-/// Deploys a single script, ensuring its dependencies are already deployed, and logs the deployment status.
-/// </summary>
-/// <param name="script">The script to deploy.</param>
-/// <param name="deployedScripts">The list of scripts that are already deployed.</param>
-/// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
-private async Task DeployScript(Script script,
+    /// <summary>
+    /// Deploys a single script, ensuring its dependencies are already deployed, and logs the deployment status.
+    /// </summary>
+    /// <param name="script">The script to deploy.</param>
+    /// <param name="deployedScripts">The list of scripts that are already deployed.</param>
+    /// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
+    private async Task DeployScript(Script script,
                                     IList<ScriptDeployed> deployedScripts,
                                     CancellationToken cancellationToken)
     {
@@ -77,14 +74,14 @@ private async Task DeployScript(Script script,
         logger.LogInformation($"Script {script.Name} deployed");
     }
 
-/// <summary>
-/// Retrieves the collection of scripts that need to be deployed, excluding already deployed scripts 
-/// unless they are allowed to be redeployed.
-/// </summary>
-/// <param name="deployedScripts">The list of scripts that are already deployed.</param>
-/// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
-/// <returns>A read-only collection of scripts to deploy.</returns>
-private async Task<IReadOnlyCollection<Script>> GetScriptsToDeploy(
+    /// <summary>
+    /// Retrieves the collection of scripts that need to be deployed, excluding already deployed scripts
+    /// unless they are allowed to be redeployed.
+    /// </summary>
+    /// <param name="deployedScripts">The list of scripts that are already deployed.</param>
+    /// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
+    /// <returns>A read-only collection of scripts to deploy.</returns>
+    private async Task<IReadOnlyCollection<Script>> GetScriptsToDeploy(
         IReadOnlyCollection<ScriptDeployed> deployedScripts,
         CancellationToken cancellationToken)
     {
@@ -138,19 +135,28 @@ private async Task<IReadOnlyCollection<Script>> GetScriptsToDeploy(
         return result;
     }
 
-/// <summary>
-/// Determines if a script can be redeployed based on its settings and changes in content.
-/// </summary>
-/// <param name="script">The script under evaluation for redeployment.</param>
-/// <param name="deployedScript">The corresponding deployed script.</param>
-/// <returns>True if the script can be redeployed; otherwise false.</returns>
-private static bool CanBeDeployedAgain(Script script, ScriptDeployed deployedScript)
+    /// <summary>
+    /// Determines if a script can be redeployed based on its settings and changes in content.
+    /// </summary>
+    /// <param name="script">The script under evaluation for redeployment.</param>
+    /// <param name="deployedScript">The corresponding deployed script.</param>
+    /// <returns>True if the script can be redeployed; otherwise false.</returns>
+    private static bool CanBeDeployedAgain(Script script, ScriptDeployed deployedScript)
     {
-        return script.CanRepeat &&
-               !string.IsNullOrEmpty(script.ContentsHash) &&
-               !string.IsNullOrEmpty(deployedScript.ContentsHash) &&
-               !deployedScript.ContentsHash.Equals(
-                   script.ContentsHash,
-                   StringComparison.OrdinalIgnoreCase);
+        if (!script.CanRepeat)
+            return false;
+
+        var hashNotUsed = string.IsNullOrEmpty(script.ContentsHash) &&
+                          string.IsNullOrEmpty(deployedScript.ContentsHash);
+
+        if (hashNotUsed)
+            return true;
+
+        var hashNotChanged = string.Equals(
+            deployedScript.ContentsHash,
+            script.ContentsHash,
+            StringComparison.OrdinalIgnoreCase);
+
+        return !hashNotChanged;
     }
 }

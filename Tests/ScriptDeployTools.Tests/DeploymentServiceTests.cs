@@ -3,11 +3,75 @@ using Moq;
 
 namespace ScriptDeployTools.Tests;
 
-public class DeploymentServiceTests
+public class DeploymentServiceFixture : IDisposable
 {
-    private readonly Mock<ILogger> _mockLogger = new();
-    private readonly Mock<IDeploySource> _mockSource = new();
-    private readonly Mock<IDeployTarget> _mockTarget = new();
+    public Mock<ILogger> MockLogger { get; }
+    public Mock<IDeploySource> MockSource { get; }
+    public Mock<IDeployTarget> MockTarget { get; }
+    public IDeploymentService DeploymentService { get; }
+
+    public DeploymentServiceFixture()
+    {
+        MockLogger = new Mock<ILogger>();
+        MockSource = new Mock<IDeploySource>();
+        MockTarget = new Mock<IDeployTarget>();
+
+        DeploymentService = new DeploymentService(
+            MockLogger.Object,
+            MockSource.Object,
+            MockTarget.Object);
+    }
+
+    public void Dispose()
+    {
+    }
+}
+
+public class DeploymentServiceTests : IClassFixture<DeploymentServiceFixture>
+{
+    private readonly DeploymentServiceFixture _fixture;
+
+    public DeploymentServiceTests(DeploymentServiceFixture fixture)
+    {
+        _fixture = fixture;
+
+        ResetFixture();
+    }
+
+    private void ResetFixture()
+    {
+        _fixture.MockLogger.Reset();
+        _fixture.MockSource.Reset();
+        _fixture.MockTarget.Reset();
+    }
+
+    [Fact]
+    public async Task NoScriptsToDeploy_LogsInformation()
+    {
+        // Arrange
+        _fixture.MockTarget
+            .Setup(t => t.GetDeployedScripts(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ScriptDeployed>());
+
+        _fixture.MockSource
+            .Setup(s => s.GetScripts(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<string, Script>());
+
+        // Act
+        await _fixture.DeploymentService.Deploy(CancellationToken.None);
+
+        // Assert
+        _fixture.MockLogger.Verify(log =>
+                log.Log(LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((value, type) => string.Equals(
+                        "No scripts to deploy",
+                        value.ToString(),
+                        StringComparison.InvariantCultureIgnoreCase)),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
 
     [Fact]
     public async Task ScriptAlreadyDeployed_DoesNotDeployAgain()
@@ -23,29 +87,24 @@ public class DeploymentServiceTests
             { "Script1", new Script("Script1", "TestContent1") { Name = "Script1", ContentsHash = "hash1", CanRepeat = false } }
         };
 
-        _mockTarget
+        _fixture.MockTarget
             .Setup(t => t.GetDeployedScripts(It.IsAny<CancellationToken>()))
             .ReturnsAsync(deployedScripts);
 
-        _mockSource
+        _fixture.MockSource
             .Setup(s => s.GetScripts(It.IsAny<CancellationToken>()))
             .ReturnsAsync(scriptsToDeploy);
 
-        var deploymentService = new DeploymentService(
-            _mockLogger.Object,
-            _mockSource.Object,
-            _mockTarget.Object);
-
         // Act
-        await deploymentService.Deploy(CancellationToken.None);
+        await _fixture.DeploymentService.Deploy(CancellationToken.None);
 
         // Assert
-        _mockTarget.Verify(t => t.DeployScript(
+        _fixture.MockTarget.Verify(t => t.DeployScript(
                 It.IsAny<Script>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
 
-        _mockLogger.Verify(log =>
+        _fixture.MockLogger.Verify(log =>
                 log.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
@@ -78,29 +137,24 @@ public class DeploymentServiceTests
             }
         };
 
-        _mockTarget
+        _fixture.MockTarget
             .Setup(t => t.GetDeployedScripts(It.IsAny<CancellationToken>()))
             .ReturnsAsync(deployedScripts);
 
-        _mockSource
+        _fixture.MockSource
             .Setup(s => s.GetScripts(It.IsAny<CancellationToken>()))
             .ReturnsAsync(scriptsToDeploy);
 
-        var deploymentService = new DeploymentService(
-            _mockLogger.Object,
-            _mockSource.Object,
-            _mockTarget.Object);
-
         // Act
-        await deploymentService.Deploy(CancellationToken.None);
+        await _fixture.DeploymentService.Deploy(CancellationToken.None);
 
         // Assert
-        _mockTarget.Verify(t => t.DeployScript(
+        _fixture.MockTarget.Verify(t => t.DeployScript(
                 It.IsAny<Script>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
-        _mockLogger.Verify(log =>
+        _fixture.MockLogger.Verify(log =>
                 log.Log(LogLevel.Debug,
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((value, type) => string.Equals(
@@ -129,25 +183,20 @@ public class DeploymentServiceTests
             }
         };
 
-        _mockTarget
+        _fixture.MockTarget
             .Setup(t => t.GetDeployedScripts(It.IsAny<CancellationToken>()))
             .ReturnsAsync(deployedScripts);
 
-        _mockSource
+        _fixture.MockSource
             .Setup(s => s.GetScripts(It.IsAny<CancellationToken>()))
             .ReturnsAsync(scriptsToDeploy);
 
-        var deploymentService = new DeploymentService(
-            _mockLogger.Object,
-            _mockSource.Object,
-            _mockTarget.Object);
-
         // Act
-        await deploymentService.Deploy(CancellationToken.None);
+        await _fixture.DeploymentService.Deploy(CancellationToken.None);
 
         // Assert
-        _mockTarget.Verify(t => t.DeployScript(It.IsAny<Script>(), It.IsAny<CancellationToken>()), Times.Never);
-        _mockLogger.Verify(log =>
+        _fixture.MockTarget.Verify(t => t.DeployScript(It.IsAny<Script>(), It.IsAny<CancellationToken>()), Times.Never);
+        _fixture.MockLogger.Verify(log =>
                 log.Log(LogLevel.Error,
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((value, type) => string.Equals(
@@ -157,5 +206,40 @@ public class DeploymentServiceTests
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
+    }
+
+    [Theory]
+    [InlineData("hash1", "hash1", false, false)] // Same hash, CanRepeat false -> no deploy
+    [InlineData("hash1", "hash2", true, true)] // Changed hash, CanRepeat true -> deploy
+    [InlineData("hash1", "hash2", false, false)] // Changed hash, CanRepeat false -> no deploy
+    [InlineData(null, null, true, true)] // Null hash, CanRepeat true -> deploy
+    public async Task ScriptDeployment_BasedOnHashAndCanRepeat(
+        string? deployedHash, string? newHash, bool canRepeat, bool shouldDeploy)
+    {
+        // Arrange
+        var deployedScripts = new List<ScriptDeployed>
+        {
+            new("Script1") { ContentsHash = deployedHash }
+        };
+
+        var scriptsToDeploy = new Dictionary<string, Script>
+        {
+            { "Script1", new Script("Script1", "TestContent1") { Name = "Script1", ContentsHash = newHash, CanRepeat = canRepeat } }
+        };
+
+        _fixture.MockTarget
+            .Setup(t => t.GetDeployedScripts(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(deployedScripts);
+
+        _fixture.MockSource
+            .Setup(s => s.GetScripts(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(scriptsToDeploy);
+
+        // Act
+        await _fixture.DeploymentService.Deploy(CancellationToken.None);
+
+        // Assert
+        _fixture.MockTarget.Verify(t => t.DeployScript(
+            It.IsAny<Script>(), It.IsAny<CancellationToken>()), shouldDeploy ? Times.Once() : Times.Never());
     }
 }
