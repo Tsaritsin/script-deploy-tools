@@ -24,21 +24,28 @@ try
     var deployHelper = host.Services.GetRequiredService<DeployHelper>();
     var applicationLifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
 
-    var tasks = new List<Task>
-    {
-        host.WaitForShutdownAsync(),
-        deployHelper.Deploy(applicationLifetime.ApplicationStopping)
-    };
+    await deployHelper.Deploy(applicationLifetime.ApplicationStopping);
 
-    await Task.WhenAny(tasks);
+    await Log.CloseAndFlushAsync();
 
-    await host.StopAsync();
+    await host.WaitForShutdownAsync(applicationLifetime.ApplicationStopping);
+    // var tasks = new List<Task>
+    // {
+    //     host.WaitForShutdownAsync(),
+    //     deployHelper.Deploy(applicationLifetime.ApplicationStopping)
+    // };
+    //
+    // await Task.WhenAny(tasks);
+    //
+    // await host.StopAsync();
 }
 catch (Exception ex)
 {
     Log.Fatal(ex, "Something went wrong");
-}
-finally
-{
+
     await Log.CloseAndFlushAsync();
 }
+// finally
+// {
+//     //await Log.CloseAndFlushAsync();
+// }

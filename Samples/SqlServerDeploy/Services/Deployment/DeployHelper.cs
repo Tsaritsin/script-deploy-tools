@@ -55,19 +55,5 @@ internal class DeployHelper(
         {
             _logger.Fatal(ex, "Something went wrong");
         }
-
-        // var upgrader = DeployChanges.To.SqlDatabase(connectionString)
-        //     .WithScriptsAndCodeEmbeddedInAssembly(typeof(MyAssembly).Assembly)
-        //     .LogToConsole()
-        //     .JournalToSqlWithHashing(scripts =>
-        //
-        //         scripts.WithPrefix("MyAssembly.Scripts.ByDate.")
-        //             .OrderBy(s => s.Name).Concat(
-        //        
-        //                 scripts.WithPrefix("MyAssembly.Scripts.Dependent.")
-        //                     .OrderByDependency("#requires"))
-        //     )
-        //     .Build()
-        //     .PerformUpgrade();
     }
 }
