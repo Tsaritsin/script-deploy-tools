@@ -5,7 +5,7 @@ namespace ScriptDeployTools.Tests;
 
 /// <summary>
 /// Provides a fixture for setting up and managing dependencies for testing the DeploymentService.
-/// Includes mocks for ILogger, IDeploySource, and IDeployTarget, and an instance of DeploymentService.
+/// Include mocks for ILogger, IDeploySource, and IDeployTarget, and an instance of DeploymentService.
 /// </summary>
 public class DeploymentServiceFixture : IDisposable
 {
@@ -26,10 +26,10 @@ public class DeploymentServiceFixture : IDisposable
             MockTarget.Object);
     }
 
-/// <summary>
-/// Cleans up resources held by the DeploymentServiceFixture.
-/// </summary>
-public void Dispose()
+    /// <summary>
+    /// Cleans up resources held by the DeploymentServiceFixture.
+    /// </summary>
+    public void Dispose()
     {
     }
 }
@@ -42,31 +42,31 @@ public class DeploymentServiceTests : IClassFixture<DeploymentServiceFixture>
 {
     private readonly DeploymentServiceFixture _fixture;
 
-/// <summary>
-/// Initializes a new instance of the DeploymentServiceTests class with the specified fixture.
-/// Resets the mocks of the fixture to ensure a clean state for every test.
-/// </summary>
-public DeploymentServiceTests(DeploymentServiceFixture fixture)
+    /// <summary>
+    /// Initializes a new instance of the DeploymentServiceTests class with the specified fixture.
+    /// Resets the mocks of the fixture to ensure a clean state for every test.
+    /// </summary>
+    public DeploymentServiceTests(DeploymentServiceFixture fixture)
     {
         _fixture = fixture;
 
         ResetFixture();
     }
 
-/// <summary>
-/// Resets the mocks in the fixture to their initial state.
-/// </summary>
-private void ResetFixture()
+    /// <summary>
+    /// Resets the mocks in the fixture to their initial state.
+    /// </summary>
+    private void ResetFixture()
     {
         _fixture.MockLogger.Reset();
         _fixture.MockSource.Reset();
         _fixture.MockTarget.Reset();
     }
 
-/// <summary>
-/// Validates that if there are no scripts to deploy, the system logs the appropriate informational message.
-/// </summary>
-[Fact]
+    /// <summary>
+    /// Validates that if there are no scripts to deploy, the system logs the appropriate informational message.
+    /// </summary>
+    [Fact]
     public async Task NoScriptsToDeploy_LogsInformation()
     {
         // Arrange
@@ -94,10 +94,10 @@ private void ResetFixture()
             Times.Once);
     }
 
-/// <summary>
-/// Ensures that already deployed scripts are not deployed again and logs the appropriate message.
-/// </summary>
-[Fact]
+    /// <summary>
+    /// Ensures that already deployed scripts are not deployed again and logs the appropriate message.
+    /// </summary>
+    [Fact]
     public async Task ScriptAlreadyDeployed_DoesNotDeployAgain()
     {
         // Arrange
@@ -141,11 +141,11 @@ private void ResetFixture()
             Times.Once);
     }
 
-/// <summary>
-/// Verifies that a script marked as repeatable with a hash change is deployed again 
-/// and logs a debug message.
-/// </summary>
-[Fact]
+    /// <summary>
+    /// Verifies that a script marked as repeatable with a hash change is deployed again
+    /// and logs a debug message.
+    /// </summary>
+    [Fact]
     public async Task ScriptCanRepeatWithHashChange_DeploysAgain()
     {
         // Arrange
@@ -194,10 +194,10 @@ private void ResetFixture()
             Times.Once);
     }
 
-/// <summary>
-/// Ensures that scripts with unmet dependencies are not deployed and logs an error message.
-/// </summary>
-[Fact]
+    /// <summary>
+    /// Ensures that scripts with unmet dependencies are not deployed and logs an error message.
+    /// </summary>
+    [Fact]
     public async Task ScriptWithDependencyNotDeployed_DoesNotDeployScript()
     {
         // Arrange
@@ -239,11 +239,11 @@ private void ResetFixture()
             Times.Once);
     }
 
-/// <summary>
-/// Tests the deployment behavior based on the script's hash value and the CanRepeat flag.
-/// Uses different combinations of hash and CanRepeat values to validate expected outcomes.
-/// </summary>
-[Theory]
+    /// <summary>
+    /// Tests the deployment behavior based on the script's hash value and the CanRepeat flag.
+    /// Uses different combinations of hash and CanRepeat values to validate expected outcomes.
+    /// </summary>
+    [Theory]
     [InlineData("hash1", "hash1", false, false)] // Same hash, CanRepeat false -> no deploy
     [InlineData("hash1", "hash2", true, true)] // Changed hash, CanRepeat true -> deploy
     [InlineData("hash1", "hash2", false, false)] // Changed hash, CanRepeat false -> no deploy
