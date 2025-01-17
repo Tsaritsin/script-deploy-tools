@@ -53,7 +53,10 @@ internal class SortScriptsByDependenciesHelper
     /// <param name="node">The start node for the topological sort.</param>
     private void TopologicalSort(string node)
     {
-        if (_visiting.Contains(node)) throw new InvalidOperationException($"Detected cycle for: {node}");
+        if (_visiting.Contains(node))
+        {
+            throw new CyclicDependencyException(node);
+        }
 
         if (_visited.Contains(node))
             return;
@@ -61,7 +64,8 @@ internal class SortScriptsByDependenciesHelper
         // Push node to stack
         _visiting.Add(node);
 
-        foreach (var neighbor in _graph[node]) TopologicalSort(neighbor);
+        foreach (var neighbor in _graph[node])
+            TopologicalSort(neighbor);
 
         _visiting.Remove(node);
         _visited.Add(node);
