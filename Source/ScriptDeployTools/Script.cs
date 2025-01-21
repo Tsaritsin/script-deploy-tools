@@ -22,11 +22,6 @@ public class Script(
     public string? DependsOn { get; set; }
 
     /// <summary>
-    /// Scrip name from source
-    /// </summary>
-    public string? Name { get; set; }
-
-    /// <summary>
     /// Description of action in scrip
     /// </summary>
     public string? Description { get; set; }

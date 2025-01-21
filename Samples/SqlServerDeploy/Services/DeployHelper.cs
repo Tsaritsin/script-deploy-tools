@@ -4,10 +4,9 @@ using ScriptDeployTools;
 using ScriptDeployTools.Sources.Embedded;
 using ScriptDeployTools.Targets.SqlServer;
 using Serilog;
-using SqlServerDeploy.Services.ConnectionString;
 using ILogger = Serilog.ILogger;
 
-namespace SqlServerDeploy.Services.Deployment;
+namespace SqlServerDeploy.Services;
 
 internal class DeployHelper(
     ILoggerFactory loggerFactory,
@@ -21,13 +20,9 @@ internal class DeployHelper(
         {
             _logger.Information("Deploying...");
 
-            var connectionString = configuration.GetConnectionString();
+            var deploySettings = GetDeploySettings();
 
-            var deploySettings = new DeploySettings();
-
-            configuration
-                .GetSection(Constants.Infrastructure.ConnectionStrings.DeploySettings)
-                .Bind(deploySettings);
+            var connectionString = ConnectionStringHelper.GetConnectionStringBySettings(deploySettings);
 
             var deployService = new DeployBuilder()
                 .AddLogger(loggerFactory.CreateLogger<IDeploymentService>())
@@ -39,8 +34,8 @@ internal class DeployHelper(
                 .ToSqlServer(options =>
                 {
                     options.ConnectionString = connectionString;
-                    options.DatabaseCreationScript = "SqlServerDeploy.Scripts.InitializeDatabase";
-                    options.DatabaseParametersScript = "SqlServerDeploy.Scripts.SetDatabaseParameters";
+                    options.DatabaseCreationScript = "INITIALIZE_DATABASE";
+                    options.DatabaseParametersScript = "SET_DATABASE_PARAMETERS";
                     options.DatabaseName = deploySettings.DatabaseName;
                     options.DefaultFilePrefix = deploySettings.DefaultFilePrefix;
                     options.DataPath = deploySettings.DataPath;
@@ -55,5 +50,16 @@ internal class DeployHelper(
         {
             _logger.Fatal(ex, "Something went wrong");
         }
+    }
+
+    private DeploySettings GetDeploySettings()
+    {
+        var deploySettings = new DeploySettings();
+
+        configuration
+            .GetSection(Constants.Infrastructure.ConnectionStrings.DeploySettings)
+            .Bind(deploySettings);
+
+        return deploySettings;
     }
 }

@@ -2,5 +2,5 @@
 
 public static class RootScript
 {
-    public const string Name = "Initialized";
+    public const string Name = "INITIALIZE_VERSION";
 }

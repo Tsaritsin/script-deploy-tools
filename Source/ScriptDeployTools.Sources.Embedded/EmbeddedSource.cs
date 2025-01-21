@@ -1,6 +1,4 @@
 ﻿using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
@@ -126,13 +124,11 @@ internal class EmbeddedSource(
             return null;
         }
 
-        return new Script(key, scriptContent)
+        return new Script(manifest.Key, scriptContent)
         {
-            Name = manifest.Name,
             DependsOn = manifest.DependsOn,
             Description = manifest.Description,
-            CanRepeat = manifest.CanRepeat,
-            ContentsHash = GenerateHash(scriptContent)
+            CanRepeat = manifest.CanRepeat
         };
     }
 
@@ -195,7 +191,7 @@ internal class EmbeddedSource(
 
             if (script is not null)
             {
-                _scripts.Add(scriptAndManifest.Key, script);
+                _scripts.Add(script.Key, script);
             }
         }
     }
@@ -261,21 +257,9 @@ internal class EmbeddedSource(
     /// </summary>
     /// <param name="scriptName">The name of the script.</param>
     /// <returns>The normalized key for the script.</returns>
-    public string GetKey(string scriptName)
+    private string GetKey(string scriptName)
     {
         return scriptName.ToLowerInvariant();
-    }
-
-    /// <summary>
-    /// Returns the SHA256 hash of the supplied content
-    /// </summary>
-    /// <returns>The hash.</returns>
-    /// <param name="content">Content.</param>
-    public string GenerateHash(string content)
-    {
-        using var algorithm = SHA256.Create();
-
-        return Convert.ToBase64String(algorithm.ComputeHash(Encoding.UTF8.GetBytes(content)));
     }
 
     #endregion

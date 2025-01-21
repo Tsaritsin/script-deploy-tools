@@ -18,8 +18,6 @@ internal class EmbeddedScriptsHelper(
 
     public async Task<Script?> GetScript(string scriptName, CancellationToken cancellationToken)
     {
-        logger.LogDebug("Get script {scriptName}", scriptName);
-
         await LoadScripts(cancellationToken);
 
         var key = GetKey(scriptName);
@@ -51,10 +49,7 @@ internal class EmbeddedScriptsHelper(
 
             var content = await GetResourceContent(assembly, resourceName, cancellationToken);
 
-            var script = new Script(key, content)
-            {
-                Name = scriptName
-            };
+            var script = new Script(key, content);
 
             _scripts.Add(key, script);
         }

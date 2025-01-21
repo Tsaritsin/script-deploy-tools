@@ -1,6 +1,6 @@
 ﻿{
-  "Name": "DeviceTypes",
-  "DependsOn": "IDENTITY_Common",
-  "Description": "Create table",
+  "Key": "DEVICE_TYPES",
+  "DependsOn": "IDENTITY_COMMON",
+  "Description": "Create table DeviceTypes",
   "CanRepeat": false
 }

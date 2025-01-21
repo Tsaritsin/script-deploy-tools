@@ -1,9 +1,7 @@
 ﻿namespace ScriptDeployTools.Sources.Embedded;
 
-internal class ScriptManifest
+internal record ScriptManifest(string Key)
 {
-    public string? Name { get; set; }
-
     public string? DependsOn { get; set; }
 
     public string? Description { get; set; }

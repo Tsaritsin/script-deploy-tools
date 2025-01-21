@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using SqlServerDeploy.Services;
-using SqlServerDeploy.Services.Deployment;
 
 Log.Logger = LogsHelper.CreateLogger().ForContext<Program>();
 

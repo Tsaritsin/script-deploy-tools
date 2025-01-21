@@ -30,6 +30,9 @@ internal class DeploymentService(
 
             var scripsToDeploy = await GetScriptsToDeploy(deployedScripts, cancellationToken);
 
+            if (scripsToDeploy.Count == 0)
+                return;
+
             foreach (var script in scripsToDeploy)
             {
                 await DeployScript(script, deployedScripts, cancellationToken);
@@ -62,16 +65,12 @@ internal class DeploymentService(
             return;
         }
 
-        logger.LogInformation($"Deploying script {script.Name}");
-
         await target.DeployScript(script, cancellationToken);
 
-        deployedScripts.Add(new ScriptDeployed(script.Name!)
+        deployedScripts.Add(new ScriptDeployed(script.Key)
         {
             ContentsHash = script.ContentsHash
         });
-
-        logger.LogInformation($"Script {script.Name} deployed");
     }
 
     /// <summary>
@@ -102,7 +101,7 @@ internal class DeploymentService(
         foreach (var script in scripts)
         {
             var deployedScript = deployedScripts.FirstOrDefault(item => item.Name.Equals(
-                script.Value.Name,
+                script.Value.Key,
                 StringComparison.OrdinalIgnoreCase));
 
             if (deployedScript != null)
@@ -111,11 +110,11 @@ internal class DeploymentService(
 
                 if (!canRepeat)
                 {
-                    logger.LogInformation($"Script {script.Value.Name} is already deployed");
+                    logger.LogInformation($"Script {script.Value.Key} is already deployed");
                     continue;
                 }
 
-                logger.LogDebug($"Script {script.Value.Name} is already deployed, but can be repeated");
+                logger.LogDebug($"Script {script.Value.Key} is already deployed, but can be repeated");
             }
 
             scriptsToDeploy.Add(script.Key, script.Value);
@@ -124,6 +123,8 @@ internal class DeploymentService(
         if (scriptsToDeploy.Count == 0)
         {
             logger.LogInformation("No scripts to deploy");
+
+            return result;
         }
 
         var sortedScripts = SortScriptsHelper.Sort(scriptsToDeploy);

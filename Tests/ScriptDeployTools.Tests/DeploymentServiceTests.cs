@@ -108,7 +108,7 @@ public class DeploymentServiceTests : IClassFixture<DeploymentServiceFixture>
 
         var scriptsToDeploy = new Dictionary<string, Script>
         {
-            { "Script1", new Script("Script1", "TestContent1") { Name = "Script1", ContentsHash = "hash1", CanRepeat = false } }
+            { "Script1", new Script("Script1", "TestContent1") { ContentsHash = "hash1", CanRepeat = false } }
         };
 
         _fixture.MockTarget
@@ -160,7 +160,7 @@ public class DeploymentServiceTests : IClassFixture<DeploymentServiceFixture>
                 "Script1",
                 new Script("Script1", "TestContent1")
                 {
-                    Name = "Script1", ContentsHash = "new_hash", CanRepeat = true
+                    ContentsHash = "new_hash", CanRepeat = true
                 }
             }
         };
@@ -209,7 +209,7 @@ public class DeploymentServiceTests : IClassFixture<DeploymentServiceFixture>
                 "Script2",
                 new Script("Script2", "TestContent2")
                 {
-                    Name = "Script2", DependsOn = "Script1"
+                    DependsOn = "Script1"
                 }
             }
         };
@@ -259,7 +259,7 @@ public class DeploymentServiceTests : IClassFixture<DeploymentServiceFixture>
 
         var scriptsToDeploy = new Dictionary<string, Script>
         {
-            { "Script1", new Script("Script1", "TestContent1") { Name = "Script1", ContentsHash = newHash, CanRepeat = canRepeat } }
+            { "Script1", new Script("Script1", "TestContent1") { ContentsHash = newHash, CanRepeat = canRepeat } }
         };
 
         _fixture.MockTarget
