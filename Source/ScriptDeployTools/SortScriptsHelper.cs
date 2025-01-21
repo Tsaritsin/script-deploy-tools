@@ -1,7 +1,16 @@
 ﻿namespace ScriptDeployTools;
 
+/// <summary>
+/// Provides functionality to sort scripts based on their dependencies.
+/// </summary>
 public static class SortScriptsHelper
 {
+    /// <summary>
+    /// Sorts the provided scripts by their dependencies in a topological order.
+    /// Ensures that dependencies are resolved in the correct sequence.
+    /// </summary>
+    /// <param name="scripts">The dictionary of scripts to sort, keyed by their unique identifiers.</param>
+    /// <returns>A read-only collection of sorted scripts in dependency order.</returns>
     public static IReadOnlyCollection<Script> Sort(IDictionary<string, Script> scripts)
     {
         var helper = new SortScriptsByDependenciesHelper();

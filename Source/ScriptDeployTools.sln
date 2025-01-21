@@ -5,6 +5,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{07A22635-9349-4259-9A92-4AE4083AD45A}"
 	ProjectSection(SolutionItems) = preProject
 		..\.gitignore = ..\.gitignore
+		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScriptDeployTools", "ScriptDeployTools\ScriptDeployTools.csproj", "{6A206478-9695-4BE1-BB05-4894DDAF83A5}"

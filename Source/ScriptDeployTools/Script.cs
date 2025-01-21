@@ -1,5 +1,10 @@
 ﻿namespace ScriptDeployTools;
 
+/// <summary>
+/// Initializes a new instance of the <see cref="Script"/> class.
+/// </summary>
+/// <param name="key">The unique identifier for the script.</param>
+/// <param name="content">The content of the script.</param>
 public class Script(
     string key,
     string content)
