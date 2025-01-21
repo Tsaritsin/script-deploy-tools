@@ -22,6 +22,11 @@ public class Script(
     public string? DependsOn { get; set; }
 
     /// <summary>
+    /// Key of deployed script after that current script become not actual and can not deploy
+    /// </summary>
+    public string? ActualBefore { get; set; }
+
+    /// <summary>
     /// Description of action in scrip
     /// </summary>
     public string? Description { get; set; }

@@ -127,6 +127,7 @@ internal class EmbeddedSource(
         return new Script(manifest.Key, scriptContent)
         {
             DependsOn = manifest.DependsOn,
+            ActualBefore = manifest.ActualBefore,
             Description = manifest.Description,
             CanRepeat = manifest.CanRepeat
         };

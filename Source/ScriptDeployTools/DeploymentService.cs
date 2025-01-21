@@ -54,6 +54,25 @@ internal class DeploymentService(
                                     IList<ScriptDeployed> deployedScripts,
                                     CancellationToken cancellationToken)
     {
+        var isActual = script.ActualBefore is null ||
+                       !deployedScripts.Any(item => item.Name.Equals(
+                           script.ActualBefore,
+                           StringComparison.OrdinalIgnoreCase));
+
+        if (!isActual)
+        {
+            logger.LogError("Script {DependencyScript} is not actual after {ActualBefore}",
+                script.Key,
+                script.ActualBefore);
+
+            deployedScripts.Add(new ScriptDeployed(script.Key)
+            {
+                ContentsHash = script.ContentsHash
+            });
+
+            return;
+        }
+
         var dependencyIsDeployed = script.DependsOn is null ||
                                    deployedScripts.Any(item => item.Name.Equals(
                                        script.DependsOn,

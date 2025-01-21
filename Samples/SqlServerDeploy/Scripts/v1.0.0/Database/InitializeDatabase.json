@@ -1,6 +1,7 @@
 ﻿{
   "Key": "INITIALIZE_DATABASE",
   "DependsOn": null,
+  "ActualBefore" : "INITIALIZE_VERSION",
   "Description": "Script to create database",
   "CanRepeat": false
 }
