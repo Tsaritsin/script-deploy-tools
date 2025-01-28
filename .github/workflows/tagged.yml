@@ -45,6 +45,6 @@ jobs:
       run: dotnet pack ./Source/ScriptDeployTools/ScriptDeployTools.csproj --no-restore --no-build --output nupkgs -p:PackageVersion=${{ env.fullSemVer }}
 
     - name: Push to NuGet
-      run: dotnet nuget push ./nupkgs/Script.Deploy.Tools.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${NUGET_API_TOKEN}
+      run: dotnet nuget push ./nupkgs/ScriptDeployTools.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${NUGET_API_TOKEN}
       env:
         NUGET_API_TOKEN: ${{ secrets.NUGET_API_TOKEN }}
