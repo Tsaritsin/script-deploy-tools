@@ -1,7 +1,0 @@
-﻿{
-  "Key": "SET_DATABASE_PARAMETERS",
-  "DependsOn": "INITIALIZE_DATABASE",
-  "ActualBefore" : "INITIALIZE_VERSION",
-  "Description": "Script to set database's parameters",
-  "CanRepeat": false
-}

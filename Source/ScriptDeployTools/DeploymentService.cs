@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Security.Cryptography;
+using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace ScriptDeployTools;
 
@@ -6,177 +8,252 @@ namespace ScriptDeployTools;
 /// Provides services for deploying scripts, managing dependencies, and logging deployment progress.
 /// Represents the implementation of the deployment service responsible for handling script deployment processes.
 /// </summary>
-internal class DeploymentService(
+public class DeploymentService(
     ILogger logger,
     IDeploySource scriptSource,
-    IDeployTarget target) : IDeploymentService
+    IDeployTarget target,
+    DeploymentOptions options) : IDeploymentService
 {
+    #region Implementation IDeploymentService
+
     /// <summary>
     /// Initiates the deployment process, prepares the deployment target, determines the scripts to deploy,
     /// and handles script deployments while logging relevant information.
     /// </summary>
+    /// <param name="scripts">Scripts to deployed</param>
     /// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
-    public async Task Deploy(CancellationToken cancellationToken)
+    public virtual async Task<DeploymentResult> Deploy(IReadOnlyCollection<IScript> scripts,
+                                                       CancellationToken cancellationToken)
     {
         try
         {
-            logger.LogInformation("Prepare to deploy");
+            logger.LogDebug("Deployment started");
 
-            await target.PrepareToDeploy(cancellationToken);
+            var sortedScripts = SortScriptsHelper.Sort(scripts);
 
-            logger.LogDebug("Prepare completed");
+            var deployScriptStatuses = new Dictionary<string, DeployScriptStatuses>();
 
-            var deployedScripts = await target.GetDeployedScripts(cancellationToken);
-
-            var scripsToDeploy = await GetScriptsToDeploy(deployedScripts, cancellationToken);
-
-            if (scripsToDeploy.Count == 0)
-                return;
-
-            foreach (var script in scripsToDeploy)
+            foreach (var script in sortedScripts)
             {
-                await DeployScript(script, deployedScripts, cancellationToken);
+                var deployStatus = await DeployScript(script, cancellationToken);
+
+                deployScriptStatuses.Add(script.ScriptKey, deployStatus);
+
+                var scriptError = GetErrorByDeployStatus(deployStatus);
+
+                if (string.IsNullOrWhiteSpace(scriptError))
+                    continue;
+
+                return DeploymentResult.Error(
+                    deployScriptStatuses,
+                    $"Script {script.ScriptKey} failed: {scriptError}.");
             }
+
+            logger.LogDebug("Deployment completed");
+
+            return DeploymentResult.Success(deployScriptStatuses);
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, "Failed to deploy");
+            logger.LogCritical(ex, "Deployment failed");
+
+            return DeploymentResult.Error(ex.Message);
         }
+    }
+
+    #endregion
+
+    private string GetErrorByDeployStatus(DeployScriptStatuses status)
+    {
+        return status switch
+        {
+            DeployScriptStatuses.DependencyMissing => "Dependency missing",
+            DeployScriptStatuses.WrongContent => "Wrong content",
+            _ => string.Empty
+        };
+    }
+
+    /// <summary>
+    /// Determines if a script is actual based on its "ActualBefore" property and the deployed scripts in the target.
+    /// </summary>
+    /// <param name="script">The script to evaluate for actuality.</param>
+    /// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
+    /// <returns>True if the script is actual; otherwise false.</returns>
+    protected virtual async Task<bool> IsActual(IScript script, CancellationToken cancellationToken)
+    {
+        if (script.ActualBefore is null)
+            return true;
+
+        var deployedInfo = await target.GetDeployedInfo(script.ActualBefore, cancellationToken);
+
+        if (deployedInfo is null)
+            return true;
+
+        logger.LogWarning("Script {DependencyScript} is not actual after {ActualBefore}",
+            script.ScriptKey,
+            script.ActualBefore);
+
+        return false;
+    }
+
+    /// <summary>
+    /// Determines whether the dependency of a given script has already been deployed.
+    /// </summary>
+    /// <param name="script">The script whose dependency needs to be checked.</param>
+    /// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
+    /// <returns>True if the dependency is deployed; otherwise, false.</returns>
+    protected virtual async Task<bool> DependencyIsDeployed(IScript script, CancellationToken cancellationToken)
+    {
+        if (script.DependsOn is null)
+            return true;
+
+        var deployedInfo = await target.GetDeployedInfo(script.DependsOn, cancellationToken);
+
+        if (deployedInfo is not null)
+            return true;
+
+        logger.LogError("Dependency {DependencyScript} is not deployed before {Script}",
+            script.DependsOn,
+            script.ScriptKey);
+
+        return false;
+    }
+
+    /// <summary>
+    ///     Returns the SHA256 hash of the supplied content
+    /// </summary>
+    /// <returns>The hash.</returns>
+    /// <param name="content">Content.</param>
+    protected virtual string GenerateHash(string content)
+    {
+        using var algorithm = SHA256.Create();
+
+        return Convert.ToBase64String(algorithm.ComputeHash(Encoding.UTF8.GetBytes(content)));
+    }
+
+    /// <summary>
+    /// Determines if a script already deployed or can be redeployed based on its settings and changes in content.
+    /// </summary>
+    /// <param name="script">The script under evaluation for redeployment.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>True if the script can be redeployed; otherwise false.</returns>
+    protected virtual async Task<bool> IsDeployed(IScript script, CancellationToken cancellationToken)
+    {
+        var deployedInfo = await target.GetDeployedInfo(script.ScriptKey, cancellationToken);
+
+        if (deployedInfo is null)
+            return false;
+
+        if (!script.CanRepeat)
+        {
+            logger.LogDebug("Script {ScriptKey} is already deployed", script.ScriptKey);
+            return true;
+        }
+
+        var hashNotChanged = string.Equals(
+            script.ContentsHash,
+            deployedInfo.ContentsHash,
+            StringComparison.OrdinalIgnoreCase);
+
+        if (hashNotChanged)
+        {
+            logger.LogDebug("Script {ScriptKey} is not changed", script.ScriptKey);
+        }
+
+        return hashNotChanged;
+    }
+
+    /// <summary>
+    /// Sets the content of the specified script by retrieving it from the deployment source,
+    /// validates the content for emptiness, and updates the content's hash if applicable.
+    /// Logs an error if the script content is empty.
+    /// </summary>
+    /// <param name="script">The script whose content needs to be set and validated.</param>
+    /// <param name="cancellationToken">Token to observe while waiting for the task to complete, used to cancel the operation if needed.</param>
+    /// <returns>True if the script content was successfully set and is valid; otherwise, false.</returns>
+    protected virtual async Task<bool> SetScriptContent(IScript script, CancellationToken cancellationToken)
+    {
+        script.Content = await scriptSource.GetScriptContent(script.Source, cancellationToken);
+
+        var isEmpty = string.IsNullOrWhiteSpace(script.Content);
+
+        if (isEmpty)
+        {
+            logger.LogError("Script {ScriptKey} is empty", script.ScriptKey);
+
+            return false;
+        }
+
+        if (script.CanRepeat)
+        {
+            script.ContentsHash = GenerateHash(script.Content!);
+        }
+
+        return true;
     }
 
     /// <summary>
     /// Deploys a single script, ensuring its dependencies are already deployed, and logs the deployment status.
     /// </summary>
     /// <param name="script">The script to deploy.</param>
-    /// <param name="deployedScripts">The list of scripts that are already deployed.</param>
     /// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
-    private async Task DeployScript(Script script,
-                                    IList<ScriptDeployed> deployedScripts,
-                                    CancellationToken cancellationToken)
+    protected virtual async Task<DeployScriptStatuses> DeployScript(IScript script, CancellationToken cancellationToken)
     {
-        var isActual = script.ActualBefore is null ||
-                       !deployedScripts.Any(item => item.Name.Equals(
-                           script.ActualBefore,
-                           StringComparison.OrdinalIgnoreCase));
+        var isActual = await IsActual(script, cancellationToken);
 
         if (!isActual)
-        {
-            logger.LogError("Script {DependencyScript} is not actual after {ActualBefore}",
-                script.Key,
-                script.ActualBefore);
+            return DeployScriptStatuses.NotActual;
 
-            deployedScripts.Add(new ScriptDeployed(script.Key)
-            {
-                ContentsHash = script.ContentsHash
-            });
+        var contentIsValid = await SetScriptContent(script, cancellationToken);
 
-            return;
-        }
+        if (!contentIsValid)
+            return DeployScriptStatuses.WrongContent;
 
-        var dependencyIsDeployed = script.DependsOn is null ||
-                                   deployedScripts.Any(item => item.Name.Equals(
-                                       script.DependsOn,
-                                       StringComparison.OrdinalIgnoreCase));
+        var isDeployed = await IsDeployed(script, cancellationToken);
+
+        if (isDeployed)
+            return DeployScriptStatuses.AlreadyDeployed;
+
+        var dependencyIsDeployed = await DependencyIsDeployed(script, cancellationToken);
 
         if (!dependencyIsDeployed)
-        {
-            logger.LogError("Dependency {DependencyScript} is not deployed", script.DependsOn);
-            return;
-        }
+            return DeployScriptStatuses.DependencyMissing;
 
         await target.DeployScript(script, cancellationToken);
 
-        deployedScripts.Add(new ScriptDeployed(script.Key)
-        {
-            ContentsHash = script.ContentsHash
-        });
+        await RegisterMigrations(script, cancellationToken);
+
+        logger.LogInformation("Script {ScriptKey} deployed", script.ScriptKey);
+
+        return DeployScriptStatuses.Deployed;
     }
 
     /// <summary>
-    /// Retrieves the collection of scripts that need to be deployed, excluding already deployed scripts
-    /// unless they are allowed to be redeployed.
+    /// Registers migrations for the given script if registration is enabled and initialization is not skipped.
+    /// Updates migration info using a custom migration script if provided in the options.
     /// </summary>
-    /// <param name="deployedScripts">The list of scripts that are already deployed.</param>
+    /// <param name="script">The script for which migrations are to be registered.</param>
     /// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
-    /// <returns>A read-only collection of scripts to deploy.</returns>
-    private async Task<IReadOnlyCollection<Script>> GetScriptsToDeploy(
-        IReadOnlyCollection<ScriptDeployed> deployedScripts,
-        CancellationToken cancellationToken)
+    protected virtual async ValueTask RegisterMigrations(IScript script, CancellationToken cancellationToken)
     {
-        logger.LogDebug("Search scripts to deploying");
+        var canDoRegistration = !script.IsInitializeTarget &&
+                                !options.DisableRegistrationOfMigrations;
 
-        var result = new List<Script>();
+        if (!canDoRegistration)
+            return;
 
-        var scripts = await scriptSource.GetScripts(cancellationToken);
-
-        if (scripts.Count == 0)
+        if (options.InsertMigrationScript is null)
         {
-            logger.LogInformation("No scripts to deploy");
-            return result;
+            logger.LogWarning("InsertMigrationScript is not set, registration of migrations will be skipped");
+            options.DisableRegistrationOfMigrations = true;
+            return;
         }
 
-        var scriptsToDeploy = new Dictionary<string, Script>();
+        var insertMigrationScript = options.InsertMigrationScript;
 
-        foreach (var script in scripts)
-        {
-            var deployedScript = deployedScripts.FirstOrDefault(item => item.Name.Equals(
-                script.Value.Key,
-                StringComparison.OrdinalIgnoreCase));
+        insertMigrationScript.ScriptParameters[nameof(IDeployedInfo.ScriptKey)] = script.ScriptKey;
+        insertMigrationScript.ScriptParameters[nameof(IDeployedInfo.ContentsHash)] = script.ContentsHash;
 
-            if (deployedScript != null)
-            {
-                var canRepeat = CanBeDeployedAgain(script.Value, deployedScript);
-
-                if (!canRepeat)
-                {
-                    logger.LogInformation($"Script {script.Value.Key} is already deployed");
-                    continue;
-                }
-
-                logger.LogDebug($"Script {script.Value.Key} is already deployed, but can be repeated");
-            }
-
-            scriptsToDeploy.Add(script.Key, script.Value);
-        }
-
-        if (scriptsToDeploy.Count == 0)
-        {
-            logger.LogInformation("No scripts to deploy");
-
-            return result;
-        }
-
-        var sortedScripts = SortScriptsHelper.Sort(scriptsToDeploy);
-
-        result.AddRange(sortedScripts);
-
-        logger.LogDebug("Found {ScriptsToDeployCount} scripts to deploying", sortedScripts.Count);
-
-        return result;
-    }
-
-    /// <summary>
-    /// Determines if a script can be redeployed based on its settings and changes in content.
-    /// </summary>
-    /// <param name="script">The script under evaluation for redeployment.</param>
-    /// <param name="deployedScript">The corresponding deployed script.</param>
-    /// <returns>True if the script can be redeployed; otherwise false.</returns>
-    private static bool CanBeDeployedAgain(Script script, ScriptDeployed deployedScript)
-    {
-        if (!script.CanRepeat)
-            return false;
-
-        var hashNotUsed = string.IsNullOrEmpty(script.ContentsHash) &&
-                          string.IsNullOrEmpty(deployedScript.ContentsHash);
-
-        if (hashNotUsed)
-            return true;
-
-        var hashNotChanged = string.Equals(
-            deployedScript.ContentsHash,
-            script.ContentsHash,
-            StringComparison.OrdinalIgnoreCase);
-
-        return !hashNotChanged;
+        await target.DeployScript(insertMigrationScript, cancellationToken);
     }
 }

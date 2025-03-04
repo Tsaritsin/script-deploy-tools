@@ -14,6 +14,7 @@ try
     var services = builder.Services;
 
     services.AddSerilog();
+    services.AddScripts();
     services.AddSingleton<DeployHelper>();
 
     using var host = builder.Build();
@@ -27,16 +28,7 @@ try
 
     await Log.CloseAndFlushAsync();
 
-    await host.WaitForShutdownAsync(applicationLifetime.ApplicationStopping);
-    // var tasks = new List<Task>
-    // {
-    //     host.WaitForShutdownAsync(),
-    //     deployHelper.Deploy(applicationLifetime.ApplicationStopping)
-    // };
-    //
-    // await Task.WhenAny(tasks);
-    //
-    // await host.StopAsync();
+    await host.StopAsync();
 }
 catch (Exception ex)
 {
@@ -44,7 +36,3 @@ catch (Exception ex)
 
     await Log.CloseAndFlushAsync();
 }
-// finally
-// {
-//     //await Log.CloseAndFlushAsync();
-// }

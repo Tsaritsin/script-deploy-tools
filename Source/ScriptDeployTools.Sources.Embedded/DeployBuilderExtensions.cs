@@ -9,7 +9,6 @@ public static class DeployBuilderExtensions
 
         applyOptions(options);
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(options.ScriptExtension);
         ArgumentNullException.ThrowIfNull(builder.Logger);
 
         builder.Source = new EmbeddedSource(builder.Logger, options);

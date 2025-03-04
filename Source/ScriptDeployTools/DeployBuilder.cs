@@ -23,6 +23,12 @@ public class DeployBuilder : IDeployBuilder
     public IDeployTarget? Target { get; set; }
 
     /// <summary>
+    /// Gets or sets the deployment options, which include configurations for
+    /// deployment-related scripts and processes.
+    /// </summary>
+    public DeploymentOptions? Options { get; set; }
+
+    /// <summary>
     /// Builds an <see cref="IDeploymentService"/> instance based on the configured
     /// <see cref="Logger"/>, <see cref="Source"/>, and <see cref="Target"/>.
     /// </summary>
@@ -33,6 +39,7 @@ public class DeployBuilder : IDeployBuilder
         return new DeploymentService(
             Logger ?? throw new InvalidOperationException("Logger must be set"),
             Source ?? throw new InvalidOperationException("Source must be set"),
-            Target ?? throw new InvalidOperationException("Target must be set"));
+            Target ?? throw new InvalidOperationException("Target must be set"),
+            Options ?? throw new InvalidOperationException("Options must be set"));
     }
 }

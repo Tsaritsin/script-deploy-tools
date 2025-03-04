@@ -23,6 +23,12 @@ public interface IDeployBuilder
     public IDeployTarget? Target { get; set; }
 
     /// <summary>
+    /// Gets or sets the deployment options, which include configurations for
+    /// deployment-related scripts and processes.
+    /// </summary>
+    public DeploymentOptions? Options { get; set; }
+
+    /// <summary>
     /// Builds an <see cref="IDeploymentService"/> instance based on the current
     /// configuration of the builder.
     /// </summary>
