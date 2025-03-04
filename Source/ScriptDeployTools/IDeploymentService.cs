@@ -7,7 +7,8 @@ public interface IDeploymentService
 {
     /// <summary>
     /// Initiates the deployment process while observing a provided cancellation token.
-/// </summary>
-/// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    Task Deploy(CancellationToken cancellationToken);
+    /// </summary>
+    /// <param name="scripts">Scripts to be deployed.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    Task<DeploymentResult> Deploy(IReadOnlyCollection<IScript> scripts, CancellationToken cancellationToken);
 }

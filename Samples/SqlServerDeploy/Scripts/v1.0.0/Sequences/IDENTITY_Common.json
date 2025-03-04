@@ -1,6 +1,0 @@
-﻿{
-  "Key": "IDENTITY_COMMON",
-  "DependsOn": "INITIALIZE_VERSION",
-  "Description": "Create sequence of identifiers IDENTITY_Common",
-  "CanRepeat": false
-}

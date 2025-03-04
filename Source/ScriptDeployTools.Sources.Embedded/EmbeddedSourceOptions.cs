@@ -40,8 +40,4 @@ public class EmbeddedSourceOptions
     }
 
     #endregion
-
-    public string ManifestExtension { get; set; } = ".json";
-
-    public string? ScriptExtension { get; set; }
 }

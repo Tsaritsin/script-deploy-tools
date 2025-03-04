@@ -7,22 +7,17 @@
 public interface IDeployTarget
 {
     /// <summary>
-    /// Prepares the target environment for deployment by performing necessary setup actions.
+    /// DeployedInfo of script
     /// </summary>
+    /// <param name="scriptKey">Key of script</param>
     /// <param name="cancellationToken">Token used to signal cancellation of the operation.</param>
-    Task PrepareToDeploy(CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Retrieves a list of deployed scripts from the target environment.
-    /// </summary>
-    /// <param name="cancellationToken">Token used to signal cancellation of the operation.</param>
-    /// <returns>A list of deployed scripts registered in the target environment.</returns>
-    Task<List<ScriptDeployed>> GetDeployedScripts(CancellationToken cancellationToken);
+    /// <returns>A Information of deployed script registered in the target environment.</returns>
+    ValueTask<IDeployedInfo?> GetDeployedInfo(string scriptKey, CancellationToken cancellationToken);
 
     /// <summary>
     /// Executes the deployment of the provided script to the target environment.
     /// </summary>
     /// <param name="script">The script to be deployed.</param>
     /// <param name="cancellationToken">Token used to signal cancellation of the operation.</param>
-    Task DeployScript(Script script, CancellationToken cancellationToken);
+    Task DeployScript(IScript script, CancellationToken cancellationToken);
 }

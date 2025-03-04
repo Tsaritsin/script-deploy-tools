@@ -1,21 +1,36 @@
 ﻿namespace ScriptDeployTools;
 
 /// <summary>
-/// Provides functionality to sort scripts based on their dependencies.
+///     Provides functionality to sort scripts based on their dependencies.
 /// </summary>
 public static class SortScriptsHelper
 {
     /// <summary>
-    /// Sorts the provided scripts by their dependencies in a topological order.
-    /// Ensures that dependencies are resolved in the correct sequence.
+    ///     Sorts the provided scripts by their dependencies in a topological order.
+    ///     Ensures that dependencies are resolved in the correct sequence.
     /// </summary>
     /// <param name="scripts">The dictionary of scripts to sort, keyed by their unique identifiers.</param>
     /// <returns>A read-only collection of sorted scripts in dependency order.</returns>
-    public static IReadOnlyCollection<Script> Sort(IDictionary<string, Script> scripts)
+    public static IReadOnlyCollection<IScript> Sort(IReadOnlyCollection<IScript> scripts)
     {
         var helper = new SortScriptsByDependenciesHelper();
 
-        return helper.Sort(scripts);
+        var groupedScripts = scripts
+            .Where(x => !x.IsService)
+            .GroupBy(x => x.OrderGroup)
+            .OrderBy(x => x.Key)
+            .ToDictionary(x => x.Key, x => x.ToDictionary(y => y.ScriptKey));
+
+        var sortedScripts = new List<IScript>();
+
+        foreach (var group in groupedScripts.Keys)
+        {
+            var sortedGroup = helper.SortByDependencies(groupedScripts[group]);
+
+            sortedScripts.AddRange(sortedGroup);
+        }
+
+        return sortedScripts;
     }
 }
 
@@ -33,16 +48,48 @@ internal class SortScriptsByDependenciesHelper
     #region Methods
 
     /// <summary>
+    ///     Sorts a list of scripts by their dependencies using topological sorting.
+    ///     Ensures that each script appears after the scripts it depends on.
+    /// </summary>
+    /// <param name="scripts">The list of scripts to sort.</param>
+    /// <returns>A sorted list of scripts in dependency order.</returns>
+    public IReadOnlyCollection<IScript> SortByDependencies(IDictionary<string, IScript> scripts)
+    {
+        Reset();
+
+        LoadGraph(scripts.Values);
+
+        // Sort nodes in graph
+        foreach (var node in _graph.Keys)
+        {
+            if (_visited.Contains(node))
+                continue;
+
+            TopologicalSort(node);
+        }
+
+        // Get scripts by order from stack
+        var sortedKeys = _stack.ToList();
+
+        var sortedScripts = sortedKeys
+            .Where(scripts.ContainsKey)
+            .Select(key => scripts[key])
+            .ToArray();
+
+        return sortedScripts;
+    }
+
+    /// <summary>
     ///     Loads the graph structure from a list of script manifests.
     ///     Each script is represented as a node with edges to its dependent scripts.
     /// </summary>
     /// <param name="scripts">The list of script manifests to process.</param>
-    private void LoadGraph(IEnumerable<Script> scripts)
+    private void LoadGraph(IEnumerable<IScript> scripts)
     {
         foreach (var script in scripts)
         {
             // Add current script
-            _graph.TryAdd(script.Key, []);
+            _graph.TryAdd(script.ScriptKey, []);
 
             // If script has no dependencies, skip it
             if (string.IsNullOrEmpty(script.DependsOn))
@@ -51,7 +98,7 @@ internal class SortScriptsByDependenciesHelper
             // Add parent script and current script like dependence of parent
             _graph.TryAdd(script.DependsOn, []);
 
-            _graph[script.DependsOn].Add(script.Key);
+            _graph[script.DependsOn].Add(script.ScriptKey);
         }
     }
 
@@ -62,10 +109,7 @@ internal class SortScriptsByDependenciesHelper
     /// <param name="node">The start node for the topological sort.</param>
     private void TopologicalSort(string node)
     {
-        if (_visiting.Contains(node))
-        {
-            throw new CyclicDependencyException(node);
-        }
+        if (_visiting.Contains(node)) throw new CyclicDependencyException(node);
 
         if (_visited.Contains(node))
             return;
@@ -91,43 +135,6 @@ internal class SortScriptsByDependenciesHelper
         _visited.Clear();
         _visiting.Clear();
         _stack.Clear();
-    }
-
-    /// <summary>
-    ///     Sorts a list of script manifests by their dependencies using topological sorting.
-    ///     Ensures that each script appears after the scripts it depends on.
-    /// </summary>
-    /// <param name="scripts">The list of script manifests to sort.</param>
-    /// <returns>A sorted list of script manifests in dependency order.</returns>
-    public IReadOnlyCollection<Script> Sort(IDictionary<string, Script> scripts)
-    {
-        Reset();
-
-        LoadGraph(scripts.Values);
-
-        // Sort nodes in graph
-        foreach (var node in _graph.Keys)
-        {
-            if (_visited.Contains(node))
-                continue;
-
-            TopologicalSort(node);
-        }
-
-        // Get scripts by order from stack
-        var orderedKeys = _stack.ToList();
-
-        var orderedScripts = new List<Script>();
-
-        foreach (var key in orderedKeys)
-        {
-            if (scripts.TryGetValue(key, out var script))
-            {
-                orderedScripts.Add(script);
-            }
-        }
-
-        return orderedScripts;
     }
 
     #endregion
