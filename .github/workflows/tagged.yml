@@ -36,23 +36,27 @@ jobs:
       run: echo "FullSemVer (env.fullSemVer) ${{ env.fullSemVer }}"
     
     - name: Restore dependencies
-      run: dotnet restore ./Source/ScriptDeployTools/ScriptDeployTools.csproj
-           dotnet restore ./Source/ScriptDeployTools.Targets.SqlServer/ScriptDeployTools.Targets.SqlServer.csproj
-           dotnet restore ./Source/ScriptDeployTools.Sources.Embedded/ScriptDeployTools.Sources.Embedded.csproj
+      run: |
+        dotnet restore ./Source/ScriptDeployTools/ScriptDeployTools.csproj
+        dotnet restore ./Source/ScriptDeployTools.Targets.SqlServer/ScriptDeployTools.Targets.SqlServer.csproj
+        dotnet restore ./Source/ScriptDeployTools.Sources.Embedded/ScriptDeployTools.Sources.Embedded.csproj
     
     - name: Build
-      run: dotnet build ./Source/ScriptDeployTools/ScriptDeployTools.csproj --no-restore --configuration Release
-           dotnet build ./Source/ScriptDeployTools.Targets.SqlServer/ScriptDeployTools.Targets.SqlServer.csproj --no-restore --configuration Release
-           dotnet build ./Source/ScriptDeployTools.Sources.Embedded/ScriptDeployTools.Sources.Embedded.csproj --no-restore --configuration Release
+      run: |
+        dotnet build ./Source/ScriptDeployTools/ScriptDeployTools.csproj --no-restore --configuration Release
+        dotnet build ./Source/ScriptDeployTools.Targets.SqlServer/ScriptDeployTools.Targets.SqlServer.csproj --no-restore --configuration Release
+        dotnet build ./Source/ScriptDeployTools.Sources.Embedded/ScriptDeployTools.Sources.Embedded.csproj --no-restore --configuration Release
 
     - name: Pack to NuGet
-      run: dotnet pack ./Source/ScriptDeployTools/ScriptDeployTools.csproj --no-restore --no-build --output nupkgs -p:PackageVersion=${{ env.fullSemVer }}
-           dotnet pack ./Source/ScriptDeployTools.Targets.SqlServer/ScriptDeployTools.Targets.SqlServer.csproj --no-restore --no-build --output nupkgs -p:PackageVersion=${{ env.fullSemVer }}
-           dotnet pack ./Source/ScriptDeployTools.Sources.Embedded/ScriptDeployTools.Sources.Embedded.csproj --no-restore --no-build --output nupkgs -p:PackageVersion=${{ env.fullSemVer }}
+      run: |
+        dotnet pack ./Source/ScriptDeployTools/ScriptDeployTools.csproj --no-restore --no-build --output nupkgs -p:PackageVersion=${{ env.fullSemVer }}
+        dotnet pack ./Source/ScriptDeployTools.Targets.SqlServer/ScriptDeployTools.Targets.SqlServer.csproj --no-restore --no-build --output nupkgs -p:PackageVersion=${{ env.fullSemVer }}
+        dotnet pack ./Source/ScriptDeployTools.Sources.Embedded/ScriptDeployTools.Sources.Embedded.csproj --no-restore --no-build --output nupkgs -p:PackageVersion=${{ env.fullSemVer }}
 
     - name: Push to NuGet
-      run: dotnet nuget push ./nupkgs/ScriptDeployTools.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${NUGET_API_TOKEN}
-           dotnet nuget push ./nupkgs/ScriptDeployTools.Targets.SqlServer.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${NUGET_API_TOKEN}
-           dotnet nuget push ./nupkgs/ScriptDeployTools.Sources.Embedded.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${NUGET_API_TOKEN}
+      run: |
+        dotnet nuget push ./nupkgs/ScriptDeployTools.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${NUGET_API_TOKEN}
+        dotnet nuget push ./nupkgs/ScriptDeployTools.Targets.SqlServer.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${NUGET_API_TOKEN}
+        dotnet nuget push ./nupkgs/ScriptDeployTools.Sources.Embedded.*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${NUGET_API_TOKEN}
       env:
         NUGET_API_TOKEN: ${{ secrets.NUGET_API_TOKEN }}
