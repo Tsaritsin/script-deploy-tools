@@ -1,7 +1,7 @@
 # ScriptDeployTools
 Inspired by [DbUp](https://github.com/DbUp/DbUp) supporting easy filtering, ordering and versioning:
 
-[![GitHub Actions](https://img.shields.io/github/actions/workflow/status/Tsaritsin/script-deploy-tools/tagged.yml?branch=main)](https://github.com/Tsaritsin/script-deploy-tools/actions/workflows/tagged.yml)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Tsaritsin/script-deploy-tools/tagged.yml?branch=main)
 
 ## Key
 Not deployed if a script with the same key is already deployed.
