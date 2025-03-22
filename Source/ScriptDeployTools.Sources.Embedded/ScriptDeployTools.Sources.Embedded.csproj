@@ -19,7 +19,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ScriptDeployTools" Version="2.0.3" />
+        <PackageReference Include="ScriptDeployTools" Version="2.0.4" />
 <!--    <ProjectReference Include="..\ScriptDeployTools\ScriptDeployTools.csproj" />-->
     </ItemGroup>
 
