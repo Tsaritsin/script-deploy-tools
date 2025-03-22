@@ -122,7 +122,7 @@ internal class SqlServerTarget(
     public async Task DeployScript(IScript script,
                                    CancellationToken cancellationToken)
     {
-        logger.LogInformation("Deploy {Script}", script.ScriptKey);
+        logger.LogDebug("Deploy {Script}", script.ScriptKey);
 
         var databaseExists = await DatabaseExists(cancellationToken);
 
@@ -137,7 +137,7 @@ internal class SqlServerTarget(
 
         string connectionString;
 
-        if (script.IsInitializeTarget)
+        if (!databaseExists)
         {
             var builder = new SqlConnectionStringBuilder(options.ConnectionString)
             {
@@ -161,7 +161,9 @@ internal class SqlServerTarget(
 
         await command.ExecuteNonQueryAsync(cancellationToken);
 
-        if (!script.IsService)
+        var canCheckDeployedInfo = script is { IsInitializeTarget: false, IsService: false };
+
+        if (canCheckDeployedInfo)
         {
             _deployedScripts[script.ScriptKey] = new DeployedInfo(script.ScriptKey);
         }

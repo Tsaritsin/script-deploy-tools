@@ -81,6 +81,12 @@ public class DeploymentService(
     /// <returns>True if the script is actual; otherwise false.</returns>
     protected virtual async Task<bool> IsActual(IScript script, CancellationToken cancellationToken)
     {
+        if (script.IsInitializeTarget)
+        {
+            logger.LogDebug("Script {ScriptKey} is initialize target and always is actual", script.ScriptKey);
+            return true;
+        }
+
         if (script.ActualBefore is null)
             return true;
 
@@ -104,6 +110,12 @@ public class DeploymentService(
     /// <returns>True if the dependency is deployed; otherwise, false.</returns>
     protected virtual async Task<bool> DependencyIsDeployed(IScript script, CancellationToken cancellationToken)
     {
+        if (script.IsInitializeTarget)
+        {
+            logger.LogDebug("Script {ScriptKey} is initialize target and always dependency is deployed", script.ScriptKey);
+            return true;
+        }
+
         if (script.DependsOn is null)
             return true;
 
@@ -139,6 +151,12 @@ public class DeploymentService(
     /// <returns>True if the script can be redeployed; otherwise false.</returns>
     protected virtual async Task<bool> IsDeployed(IScript script, CancellationToken cancellationToken)
     {
+        if (script.IsInitializeTarget)
+        {
+            logger.LogDebug("Script {ScriptKey} is initialize target and always repeating", script.ScriptKey);
+            return false;
+        }
+
         var deployedInfo = await target.GetDeployedInfo(script.ScriptKey, cancellationToken);
 
         if (deployedInfo is null)
@@ -163,15 +181,6 @@ public class DeploymentService(
         return hashNotChanged;
     }
 
-    private ValueTask<IDeployedInfo?> GetDeployedInfo(IScript script,
-                                                      CancellationToken cancellationToken)
-    {
-        if (script.IsInitializeTarget)
-            return null;
-
-        return target.GetDeployedInfo(script.ScriptKey, cancellationToken);
-    }
-    
     /// <summary>
     /// Sets the content of the specified script by retrieving it from the deployment source,
     /// validates the content for emptiness, and updates the content's hash if applicable.
@@ -208,7 +217,7 @@ public class DeploymentService(
     /// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
     protected virtual async Task<DeployScriptStatuses> DeployScript(IScript script, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Validate script {Script}", script.ScriptKey);
+        logger.LogDebug("Validate script {Script}", script.ScriptKey);
 
         var isActual = await IsActual(script, cancellationToken);
 

@@ -41,7 +41,7 @@ internal class DeployHelper(
                         x is { IsService: true, ScriptKey: "GET_DEPLOYED_SCRIPTS" });
                 });
 
-            SetInitializeDatabaseParameters(deploySettings);
+            SetInitializeTargetParameters(deploySettings);
 
             await SetServiceScriptsContents(deployBuilder, cancellationToken);
 
@@ -55,7 +55,7 @@ internal class DeployHelper(
         }
     }
 
-    private void SetInitializeDatabaseParameters(DeploySettings deploySettings)
+    private void SetInitializeTargetParameters(DeploySettings deploySettings)
     {
         var initializeDatabase = scripts.FirstOrDefault(x =>
             x is { ScriptKey: "INITIALIZE_DATABASE" });
@@ -65,14 +65,6 @@ internal class DeployHelper(
             initializeDatabase.ScriptParameters["DatabaseName"] = deploySettings.DatabaseName;
             initializeDatabase.ScriptParameters["DataPath"] = deploySettings.DataPath;
             initializeDatabase.ScriptParameters["DefaultFilePrefix"] = deploySettings.DefaultFilePrefix;
-        }
-
-        var setDatabaseParameters = scripts.FirstOrDefault(x =>
-            x is { ScriptKey: "SET_DATABASE_PARAMETERS" });
-
-        if (setDatabaseParameters is not null)
-        {
-            setDatabaseParameters.ScriptParameters["DatabaseName"] = deploySettings.DatabaseName;
         }
     }
 
