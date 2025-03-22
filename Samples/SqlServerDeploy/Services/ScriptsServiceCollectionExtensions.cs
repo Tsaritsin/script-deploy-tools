@@ -11,7 +11,8 @@ internal static class ScriptsServiceCollectionExtensions
 
         var types = assembly.DefinedTypes
             .Where(x => x is { IsClass: true, IsAbstract: false } &&
-                        x.BaseType == typeof(ScriptBase));
+                        x.BaseType == typeof(ScriptBase))
+            .ToArray();
 
         foreach (var scriptType in types)
             collection.AddSingleton(typeof(IScript), scriptType.AsType());

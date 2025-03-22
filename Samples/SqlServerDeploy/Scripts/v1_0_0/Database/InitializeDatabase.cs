@@ -17,11 +17,4 @@ internal record InitializeDatabase() : ScriptBase("INITIALIZE_DATABASE")
     public override bool IsInitializeTarget => true;
 
     public override string Source => "SqlServerDeploy.Scripts.v1_0_0.Database.InitializeDatabase.sql";
-
-    public override IDictionary<string, string?> ScriptParameters => new Dictionary<string, string?>
-    {
-        ["DatabaseName"] = "DatabaseName",
-        ["DataPath"] = "DataPath",
-        ["DefaultFilePrefix"] = "DefaultFilePrefix"
-    };
 }

@@ -10,5 +10,7 @@ internal record CommonIdentity() : ScriptBase("IDENTITY_COMMON")
 {
     public override string DependsOn => ScriptNames.InitializeVersion;
 
+    public override bool IsInitializeTarget => true;
+
     public override string Source => "SqlServerDeploy.Scripts.v1_0_0.Sequences.IDENTITY_Common.sql";
 }

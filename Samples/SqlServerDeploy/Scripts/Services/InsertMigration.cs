@@ -1,5 +1,4 @@
-﻿using ScriptDeployTools;
-using SqlServerDeploy.Services;
+﻿using SqlServerDeploy.Services;
 
 namespace SqlServerDeploy.Scripts.Services;
 
@@ -13,10 +12,4 @@ internal record InsertMigration() : ScriptBase("INSERT_MIGRATION")
     public override bool IsService => true;
 
     public override string Source => "SqlServerDeploy.Scripts.Services.InsertMigration.sql";
-
-    public override IDictionary<string, string?> ScriptParameters => new Dictionary<string, string?>
-    {
-        [nameof(IDeployedInfo.ScriptKey)] = "ScriptKey",
-        [nameof(IDeployedInfo.ContentsHash)] = "ContentsHash"
-    };
 }

@@ -163,6 +163,15 @@ public class DeploymentService(
         return hashNotChanged;
     }
 
+    private ValueTask<IDeployedInfo?> GetDeployedInfo(IScript script,
+                                                      CancellationToken cancellationToken)
+    {
+        if (script.IsInitializeTarget)
+            return null;
+
+        return target.GetDeployedInfo(script.ScriptKey, cancellationToken);
+    }
+    
     /// <summary>
     /// Sets the content of the specified script by retrieving it from the deployment source,
     /// validates the content for emptiness, and updates the content's hash if applicable.
@@ -199,6 +208,8 @@ public class DeploymentService(
     /// <param name="cancellationToken">Token to observe while waiting for the task to complete.</param>
     protected virtual async Task<DeployScriptStatuses> DeployScript(IScript script, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Validate script {Script}", script.ScriptKey);
+
         var isActual = await IsActual(script, cancellationToken);
 
         if (!isActual)

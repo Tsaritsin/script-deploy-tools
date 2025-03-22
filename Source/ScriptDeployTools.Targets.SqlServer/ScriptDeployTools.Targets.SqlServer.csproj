@@ -20,6 +20,10 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
-      <PackageReference Include="ScriptDeployTools" Version="2.0.1" />
+<!--      <PackageReference Include="ScriptDeployTools" Version="2.0.1" />-->
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ScriptDeployTools\ScriptDeployTools.csproj" />
     </ItemGroup>
 </Project>

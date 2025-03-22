@@ -11,7 +11,7 @@ namespace SqlServerDeploy.Services;
 internal class DeployHelper(
     ILoggerFactory loggerFactory,
     IConfiguration configuration,
-    IReadOnlyCollection<IScript> scripts)
+    IEnumerable<IScript> scripts)
 {
     private readonly ILogger _logger = Log.ForContext<DeployHelper>();
 
@@ -23,7 +23,7 @@ internal class DeployHelper(
 
             var connectionString = ConnectionStringHelper.GetConnectionStringBySettings(deploySettings);
 
-            var deployService = new DeployBuilder()
+            var deployBuilder = new DeployBuilder()
                 .AddLogger(loggerFactory.CreateLogger<IDeploymentService>())
                 .AddOptions(new DeploymentOptions
                 {
@@ -39,14 +39,57 @@ internal class DeployHelper(
                     options.ConnectionString = connectionString;
                     options.GetDeployedInfoScript = scripts.FirstOrDefault(x =>
                         x is { IsService: true, ScriptKey: "GET_DEPLOYED_SCRIPTS" });
-                })
-                .Build();
+                });
 
-            await deployService.Deploy(scripts, cancellationToken);
+            SetInitializeDatabaseParameters(deploySettings);
+
+            await SetServiceScriptsContents(deployBuilder, cancellationToken);
+
+            var deployService = deployBuilder.Build();
+
+            await deployService.Deploy(scripts.ToArray(), cancellationToken);
         }
         catch (Exception ex)
         {
             _logger.Fatal(ex, "Something went wrong");
+        }
+    }
+
+    private void SetInitializeDatabaseParameters(DeploySettings deploySettings)
+    {
+        var initializeDatabase = scripts.FirstOrDefault(x =>
+            x is { ScriptKey: "INITIALIZE_DATABASE" });
+
+        if (initializeDatabase is not null)
+        {
+            initializeDatabase.ScriptParameters["DatabaseName"] = deploySettings.DatabaseName;
+            initializeDatabase.ScriptParameters["DataPath"] = deploySettings.DataPath;
+            initializeDatabase.ScriptParameters["DefaultFilePrefix"] = deploySettings.DefaultFilePrefix;
+        }
+
+        var setDatabaseParameters = scripts.FirstOrDefault(x =>
+            x is { ScriptKey: "SET_DATABASE_PARAMETERS" });
+
+        if (setDatabaseParameters is not null)
+        {
+            setDatabaseParameters.ScriptParameters["DatabaseName"] = deploySettings.DatabaseName;
+        }
+    }
+
+    private async Task SetServiceScriptsContents(IDeployBuilder deployBuilder, CancellationToken cancellationToken)
+    {
+        var scriptSource = deployBuilder.Source ?? throw new InvalidOperationException("Source is null");
+
+        var serviceScripts = scripts.Where(x => x.IsService);
+
+        foreach (var serviceScript in serviceScripts)
+        {
+            serviceScript.Content = await scriptSource.GetScriptContent(serviceScript.Source, cancellationToken);
+
+            if (string.IsNullOrEmpty(serviceScript.Content))
+            {
+                throw new InvalidOperationException($"Script content is empty: {serviceScript.ScriptKey}");
+            }
         }
     }
 

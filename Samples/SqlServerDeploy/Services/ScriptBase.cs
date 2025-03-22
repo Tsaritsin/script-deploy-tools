@@ -23,5 +23,5 @@ internal abstract record ScriptBase(
 
         public virtual bool IsInitializeTarget => false;
 
-        public virtual IDictionary<string, string?> ScriptParameters => new Dictionary<string, string?>();
+        public IDictionary<string, string?> ScriptParameters { get; } = new Dictionary<string, string?>();
 }
