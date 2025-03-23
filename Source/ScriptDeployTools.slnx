@@ -5,9 +5,6 @@
     <File Path="..\.github\workflows\any-changes.yml" />
     <File Path="..\.github\workflows\tagged.yml" />
   </Folder>
-  <Project Path="..\Samples\SqlServerDeploy\SqlServerDeploy.csproj" Type="Classic C#" />
   <Project Path="..\Tests\ScriptDeployTools.Tests\ScriptDeployTools.Tests.csproj" Type="Classic C#" />
-  <Project Path="ScriptDeployTools.Sources.Embedded\ScriptDeployTools.Sources.Embedded.csproj" Type="Classic C#" />
-  <Project Path="ScriptDeployTools.Targets.SqlServer\ScriptDeployTools.Targets.SqlServer.csproj" Type="Classic C#" />
   <Project Path="ScriptDeployTools\ScriptDeployTools.csproj" Type="Classic C#" />
 </Solution>
