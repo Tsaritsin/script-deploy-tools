@@ -25,14 +25,13 @@ try
     var applicationLifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
 
     await deployHelper.Deploy(applicationLifetime.ApplicationStopping);
-
-    await Log.CloseAndFlushAsync();
-
-    await host.StopAsync();
 }
 catch (Exception ex)
 {
     Log.Fatal(ex, "Something went wrong");
-
+}
+finally
+{
     await Log.CloseAndFlushAsync();
+    await Task.Delay(5000);
 }

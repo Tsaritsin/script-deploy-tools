@@ -12,9 +12,6 @@
     <ItemGroup>
       <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
-      <PackageReference Include="ScriptDeployTools" Version="2.0.4" />
-      <PackageReference Include="ScriptDeployTools.Sources.Embedded" Version="2.0.4" />
-      <PackageReference Include="ScriptDeployTools.Targets.SqlServer" Version="2.0.4" />
       <PackageReference Include="Serilog" Version="4.2.0" />
       <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0" />
       <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.0" />
@@ -36,11 +33,11 @@
       </None>
     </ItemGroup>
 
-<!--    <ItemGroup>-->
-<!--      <ProjectReference Include="..\..\Source\ScriptDeployTools.Sources.Embedded\ScriptDeployTools.Sources.Embedded.csproj" />-->
-<!--      <ProjectReference Include="..\..\Source\ScriptDeployTools.Targets.SqlServer\ScriptDeployTools.Targets.SqlServer.csproj" />-->
-<!--      <ProjectReference Include="..\..\Source\ScriptDeployTools\ScriptDeployTools.csproj" />-->
-<!--    </ItemGroup>-->
+    <ItemGroup>
+      <ProjectReference Include="..\..\Source\ScriptDeployTools\ScriptDeployTools.csproj" />
+      <ProjectReference Include="..\ScriptDeployTools.Targets.SqlServer\ScriptDeployTools.Targets.SqlServer.csproj" />
+      <ProjectReference Include="..\ScriptDeployTools.Sources.Embedded\ScriptDeployTools.Sources.Embedded.csproj" />
+    </ItemGroup>
 
     <Target Name="CopyDevelopmentConfig"
             BeforeTargets="Build">

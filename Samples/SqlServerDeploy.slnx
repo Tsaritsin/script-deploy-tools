@@ -1,0 +1,6 @@
+﻿<Solution>
+  <Project Path="..\Source\ScriptDeployTools\ScriptDeployTools.csproj" Type="Classic C#" />
+  <Project Path="ScriptDeployTools.Sources.Embedded\ScriptDeployTools.Sources.Embedded.csproj" Type="Classic C#" />
+  <Project Path="ScriptDeployTools.Targets.SqlServer\ScriptDeployTools.Targets.SqlServer.csproj" Type="Classic C#" />
+  <Project Path="SqlServerDeploy\SqlServerDeploy.csproj" Type="Classic C#" />
+</Solution>
